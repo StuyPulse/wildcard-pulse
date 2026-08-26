@@ -77,7 +77,7 @@
   .counter button { @apply h-[34px] w-[34px] rounded-md border border-stuypulse-border bg-stuypulse-elevated font-extrabold text-stuypulse-text transition-colors hover:bg-stuypulse-red hover:text-stuypulse-text; }
   .counter output { @apply min-w-[25px] text-center text-lg font-semibold; font-family: 'DM Mono', monospace; }
   .counter input { @apply w-20 rounded-md border border-stuypulse-border bg-stuypulse-bg px-2 py-1 text-center; }
-  .field-map { @apply relative grid grid-cols-3 gap-2 overflow-hidden rounded-panel border border-stuypulse-border bg-stuypulse-bg p-3; background-image: radial-gradient(circle at 50% 50%, rgba(255,54,54,.22) 0 11%, transparent 11.5%), linear-gradient(90deg, transparent 49.6%, rgba(255,255,255,.14) 50%, transparent 50.4%), linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px); background-size:auto,auto,33.333% 33.333%,33.333% 33.333%; }
+  .field-map { @apply relative grid grid-cols-3 gap-2 overflow-hidden rounded-panel border border-stuypulse-border bg-stuypulse-bg p-3; background-image: linear-gradient(rgba(10,14,18,.56),rgba(10,14,18,.56)), url('https://www.firstinspires.org/hs-fs/hubfs/web/program/frc/resources/2026-playing-field-page.jpg?width=1260'), radial-gradient(circle at 50% 50%, rgba(255,54,54,.22) 0 11%, transparent 11.5%); background-position:center; background-size:cover; }
   .field-map.flipped { direction: rtl; }
   .spot { @apply z-10 min-h-16 rounded-lg border border-stuypulse-border bg-stuypulse-surface/95 p-2 text-xs font-bold text-stuypulse-text transition-colors hover:bg-stuypulse-redHover hover:text-white; }
   .spot.red { @apply bg-stuypulse-red text-white; }
@@ -151,6 +151,8 @@
   details summary { @apply cursor-pointer text-sm font-bold text-stuypulse-text; }
   .note-group { @apply mt-4 border-t border-stuypulse-border pt-3 text-xs; }
   .table-scroll { @apply overflow-x-auto; }
+  .schedule-filters { @apply mb-4 grid grid-cols-3 gap-3; }
+  .schedule-filters select { @apply w-full rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3 py-2 text-sm text-stuypulse-text; }
 }
 
 @media (max-width: 900px) {
@@ -159,7 +161,7 @@
   .brand { @apply px-2.5 pb-6; }
   .main { @apply ml-[68px] w-[calc(100%-68px)] px-[22px] py-[22px]; }
   .stats { @apply grid-cols-2; }
-  .dashboard-grid, .page-grid, .assignment-alliance-grid, .form-launcher { @apply grid-cols-1; }
+  .dashboard-grid, .page-grid, .assignment-alliance-grid, .form-launcher, .schedule-filters { @apply grid-cols-1; }
   .auth { @apply grid-cols-1; }
   .auth-aside { @apply hidden; }
 }
