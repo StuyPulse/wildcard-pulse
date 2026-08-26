@@ -1,0 +1,5 @@
+import { AppShell, PageHeader } from "@/components/app-shell";
+import { getActiveEvent } from "@/lib/active-event";
+import { createClient } from "@/lib/supabase/server";
+import { MatchScoutPicker } from "./match-scout-picker";
+export default async function MatchScoutPage(){const event=await getActiveEvent();const supabase=await createClient();const[{data:matches},{data:eventTeams}]=event?await Promise.all([supabase.from("matches").select("id,match_number,red_teams,blue_teams").eq("event_id",event.id).order("match_number"),supabase.from("event_teams").select("team_id,teams(team_number,name)").eq("event_id",event.id)]):[{data:[]},{data:[]}];const teams=(eventTeams??[]).map((r:any)=>({id:r.team_id,number:r.teams?.team_number,name:r.teams?.name}));return <AppShell active="Manual scouting"><PageHeader eyebrow={event?.name??"No active event"} title="Match scouting."/>{event?<MatchScoutPicker matches={(matches??[]).map(m=>({id:m.id,number:m.match_number,red:m.red_teams,blue:m.blue_teams}))} teams={teams}/>:<section className="card"><p className="muted">Set an active event first.</p></section>}</AppShell>}

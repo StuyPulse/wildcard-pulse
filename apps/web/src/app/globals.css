@@ -8,7 +8,7 @@
   * { @apply box-border; }
   body { @apply m-0 bg-stuypulse-bg font-sans text-stuypulse-text antialiased; font-family: Manrope, sans-serif; }
   a { @apply text-inherit no-underline; }
-  button, input, select, textarea { font: inherit; }
+  button, input, select, textarea { font: inherit; color-scheme: dark; }
   button { @apply cursor-pointer; }
   button:disabled, input:disabled, select:disabled, textarea:disabled { @apply cursor-not-allowed opacity-60; }
   h1, h2 { @apply text-stuypulse-text; }
@@ -127,6 +127,17 @@
   .comparison-bar { @apply min-h-7 rounded-md px-2 py-1 text-xs font-bold text-white; }
   .comparison-bar.red { @apply bg-stuypulse-red; }
   .comparison-bar.blue { @apply bg-sky-600; }
+  .form-launcher { @apply grid grid-cols-4 gap-3; }
+  .form-launch { @apply grid min-h-36 content-between rounded-panel border border-stuypulse-border bg-stuypulse-surface p-5 transition hover:-translate-y-0.5 hover:border-stuypulse-redHover hover:bg-stuypulse-elevated; }
+  .form-launch.match { @apply border-stuypulse-red/70 bg-stuypulse-red/10; }
+  .form-launch span, .form-kicker { @apply text-[10px] font-medium uppercase tracking-[0.14em] text-stuypulse-redHover; font-family: 'DM Mono', monospace; }
+  .form-launch strong { @apply text-base text-stuypulse-text; }
+  .form-launch small { @apply text-xs text-stuypulse-textMuted; }
+  .scouting-card { @apply mx-auto grid max-w-5xl gap-5 rounded-panel border border-stuypulse-border bg-stuypulse-surface p-6 shadow-elevated; }
+  .form-intro { @apply border-b border-stuypulse-border pb-5; }
+  .form-intro h2 { @apply mt-2 text-2xl; }
+  .form-intro p { @apply mb-0 mt-2 max-w-2xl text-sm leading-relaxed text-stuypulse-textMuted; }
+  .match-roster { @apply flex gap-5 rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3 py-2 text-xs font-bold; }
 }
 
 @media (max-width: 900px) {
@@ -135,7 +146,7 @@
   .brand { @apply px-2.5 pb-6; }
   .main { @apply ml-[68px] w-[calc(100%-68px)] px-[22px] py-[22px]; }
   .stats { @apply grid-cols-2; }
-  .dashboard-grid, .page-grid, .assignment-alliance-grid { @apply grid-cols-1; }
+  .dashboard-grid, .page-grid, .assignment-alliance-grid, .form-launcher { @apply grid-cols-1; }
   .auth { @apply grid-cols-1; }
   .auth-aside { @apply hidden; }
 }
