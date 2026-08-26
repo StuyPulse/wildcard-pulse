@@ -11,6 +11,8 @@ The database is the authorization authority. `organization_members.role` is the 
 
 Every public table has RLS. Internal policy helpers are `SECURITY DEFINER` only in a non-exposed `private` schema, have fixed empty search paths, and have execute access revoked from public roles. Browser code uses the publishable key only. The photo bucket is private and its select/upload/update/delete policies check the owning submission.
 
+New Supabase Auth users are rejected by a database `BEFORE INSERT` trigger unless their email ends in `@stuypulse.com`. This protects password signup, invitations, and first-time OAuth user creation. The UI repeats the rule for clear feedback, but the trigger is the authority.
+
 ## First-admin onboarding
 
 Create the first user through `/auth/login`, then execute the following in a trusted Supabase SQL session, substituting the signed-in user UUID:

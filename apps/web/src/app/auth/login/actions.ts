@@ -3,12 +3,12 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
-const credentialsSchema = z.object({ email: z.string().email(), password: z.string().min(8).max(128) });
+const credentialsSchema = z.object({ email: z.string().email().toLowerCase().refine((email) => email.endsWith("@stuypulse.com"), "Use your @stuypulse.com email."), password: z.string().min(8).max(128) });
 export type AuthState = { error?: string; message?: string };
 
 export async function signIn(_: AuthState, formData: FormData): Promise<AuthState> {
   const parsed = credentialsSchema.safeParse({ email: formData.get("email"), password: formData.get("password") });
-  if (!parsed.success) return { error: "Enter a valid email and an 8+ character password." };
+  if (!parsed.success) return { error: "Use your @stuypulse.com email and an 8+ character password." };
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { error: "We couldn't sign you in with those details." };
@@ -17,7 +17,7 @@ export async function signIn(_: AuthState, formData: FormData): Promise<AuthStat
 
 export async function signUp(_: AuthState, formData: FormData): Promise<AuthState> {
   const parsed = credentialsSchema.safeParse({ email: formData.get("email"), password: formData.get("password") });
-  if (!parsed.success) return { error: "Enter a valid email and an 8+ character password." };
+  if (!parsed.success) return { error: "Use your @stuypulse.com email and an 8+ character password." };
   const supabase = await createClient();
   const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const { error } = await supabase.auth.signUp({ ...parsed.data, options: { emailRedirectTo: `${origin}/auth/callback` } });
