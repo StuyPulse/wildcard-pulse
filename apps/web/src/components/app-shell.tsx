@@ -4,7 +4,7 @@ import { BarChart3, CalendarDays, ClipboardList, Gauge, LayoutDashboard, Radio, 
 const navigation = [
   ["Workspace", [["Dashboard", "/dashboard", LayoutDashboard], ["Events", "/events", CalendarDays], ["Teams", "/events", Users], ["Matches", "/events", ClipboardList]]],
   ["Scout", [["My assignments", "/scout/assignments", Radio], ["Submissions", "/submissions", BarChart3]]],
-  ["Admin", [["Event import", "/admin/sync", ClipboardList], ["Users & roles", "/admin/users", ShieldCheck], ["Form builder", "/admin/forms", Settings]]],
+  ["Admin", [["Event import", "/admin/sync", ClipboardList], ["Assignments", "/admin/assignments", Radio], ["Users & roles", "/admin/users", ShieldCheck], ["Form builder", "/admin/forms", Settings]]],
 ] as const;
 
 export function AppShell({ children, active = "Dashboard" }: { children: React.ReactNode; active?: string }) {

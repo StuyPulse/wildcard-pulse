@@ -1,0 +1,34 @@
+import Link from "next/link";
+import { AppShell, PageHeader } from "@/components/app-shell";
+import { AssignmentEditor, GenerateAssignmentsForm } from "@/components/admin-forms";
+import { createClient } from "@/lib/supabase/server";
+
+type PageProps = { searchParams: Promise<{ eventId?: string }> };
+
+export default async function AssignmentBoardPage({ searchParams }: PageProps) {
+  const { eventId: requestedEventId } = await searchParams;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: membership } = user ? await supabase.from("organization_members").select("organization_id").eq("user_id", user.id).in("role", ["admin", "developer"]).limit(1).maybeSingle() : { data: null };
+  if (!membership) return <AppShell active="Assignments"><PageHeader eyebrow="Administration" title="Assignments." /><section className="card"><p className="muted">Admin access is required to manage scout assignments.</p></section></AppShell>;
+  const { data: events } = await supabase.from("events").select("id,name,event_key,starts_at").eq("organization_id", membership.organization_id).order("starts_at", { ascending: false });
+  const activeEventId = events?.some((event) => event.id === requestedEventId) ? requestedEventId! : events?.[0]?.id;
+  if (!activeEventId) return <AppShell active="Assignments"><PageHeader eyebrow="Administration" title="Assignments." /><section className="card"><p className="muted">Import an event before creating scout assignments.</p><Link className="button" href="/admin/sync">Import from TBA</Link></section></AppShell>;
+  const [{ data: scouts }, { data: matches }, { data: eventTeams }] = await Promise.all([
+    supabase.from("organization_members").select("user_id,profiles(display_name)").eq("organization_id", membership.organization_id).eq("role", "scout").order("created_at"),
+    supabase.from("matches").select("id,tba_match_key,match_number,red_teams,blue_teams,scheduled_at,status").eq("event_id", activeEventId).order("scheduled_at"),
+    supabase.from("event_teams").select("team_id,teams(team_number,name)").eq("event_id", activeEventId),
+  ]);
+  const matchIds = (matches ?? []).map((match) => match.id);
+  const { data: assignments } = matchIds.length ? await supabase.from("scouting_assignments").select("id,match_id,team_id,scout_user_id,status").eq("assignment_type", "objective").in("match_id", matchIds) : { data: [] };
+  const scoutOptions = (scouts ?? []).map((scout) => ({ id: scout.user_id, name: ((scout.profiles as unknown as { display_name: string } | null)?.display_name) ?? "Unnamed scout" }));
+  const teamsById = new Map((eventTeams ?? []).map((row) => [row.team_id, row.teams as unknown as { team_number: number; name: string } | null]));
+  const assignmentByMatchTeam = new Map((assignments ?? []).map((assignment) => [`${assignment.match_id}:${assignment.team_id}`, assignment]));
+  const activeEvent = events?.find((event) => event.id === activeEventId);
+
+  return <AppShell active="Assignments"><PageHeader eyebrow="Administration" title="Scout assignments." />
+    <section className="card" style={{ marginBottom: 18 }}><div className="assignment-toolbar"><form action="/admin/assignments" className="event-picker"><label htmlFor="eventId">Event</label><select id="eventId" name="eventId" defaultValue={activeEventId}>{events?.map((event) => <option key={event.id} value={event.id}>{event.name} · {event.event_key}</option>)}</select><button className="button secondary">Open</button></form><GenerateAssignmentsForm eventId={activeEventId} /></div><p className="muted" style={{ margin: "14px 0 0", lineHeight: 1.6 }}>Assign one Scout-role user to each team in a match. “Create scout assignments” distributes every unassigned team appearance; the board below lets you override any assignment before a submission is received.</p></section>
+    {!scoutOptions.length && <section className="card" style={{ marginBottom: 18 }}><h2>No scouts available</h2><p className="muted" style={{ lineHeight: 1.6 }}>Invite teammates with the Scout role first. They will appear here once their account and membership exist.</p><Link className="button secondary" href="/admin/users">Manage users</Link></section>}
+    <section className="card"><div className="card-head"><div><h2>{activeEvent?.name}</h2><p className="muted" style={{ margin: "5px 0 0" }}>{matches?.length ?? 0} scheduled matches · {scoutOptions.length} available scouts</p></div><Link className="button secondary" href={`/events/${activeEventId}/matches`}>Schedule</Link></div>{matches?.length ? <div className="assignment-board">{matches.map((match) => { const label = match.tba_match_key.slice(match.tba_match_key.lastIndexOf("_") + 1).toUpperCase().replace(/^QM/, "Q").replace(/M/g, " M"); const renderTeam = (teamId: string, alliance: "red" | "blue") => { const team = teamsById.get(teamId); const assignment = assignmentByMatchTeam.get(`${match.id}:${teamId}`); return <div className={alliance} key={teamId}><AssignmentEditor matchId={match.id} teamId={teamId} teamLabel={`${team?.team_number ?? "—"} · ${team?.name ?? "Unknown team"}`} scoutUserId={assignment?.scout_user_id} scouts={scoutOptions} /></div>; }; return <article className="assignment-match" key={match.id}><div className="assignment-match-head"><div><strong>{label}</strong><span>{match.scheduled_at ? new Date(match.scheduled_at).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" }) : "Time pending"}</span></div><span className={`tag ${match.status === "played" ? "complete" : "pending"}`}>{match.status}</span></div><div className="assignment-alliance-grid"><div><div className="assignment-alliance-title red">Red alliance</div>{match.red_teams.map((teamId: string) => renderTeam(teamId, "red"))}</div><div><div className="assignment-alliance-title blue">Blue alliance</div>{match.blue_teams.map((teamId: string) => renderTeam(teamId, "blue"))}</div></div></article>; })}</div> : <p className="muted">This event does not have a match schedule yet.</p>}</section>
+  </AppShell>;
+}

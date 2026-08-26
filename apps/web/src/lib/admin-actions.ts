@@ -75,6 +75,50 @@ export async function generateObjectiveAssignments(_: ActionState, formData: For
   }
 }
 
+export async function setObjectiveAssignment(_: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    const input = z.object({
+      matchId: z.string().uuid(),
+      teamId: z.string().uuid(),
+      scoutUserId: z.union([z.literal(""), z.string().uuid()]),
+    }).safeParse({ matchId: formData.get("matchId"), teamId: formData.get("teamId"), scoutUserId: formData.get("scoutUserId") });
+    if (!input.success) return { error: "This assignment could not be identified." };
+    const { organizationId } = await adminContext();
+    const database = createAdminClient();
+    const { data: match, error: matchError } = await database.from("matches").select("id,event_id,red_teams,blue_teams").eq("id", input.data.matchId).maybeSingle();
+    if (matchError || !match) return { error: "This match is unavailable." };
+    const { data: event, error: eventError } = await database.from("events").select("id").eq("id", match.event_id).eq("organization_id", organizationId).maybeSingle();
+    if (eventError || !event || ![...match.red_teams, ...match.blue_teams].includes(input.data.teamId)) return { error: "That team is not scheduled for this match." };
+    if (input.data.scoutUserId) {
+      const { data: scout, error: scoutError } = await database.from("organization_members").select("user_id").eq("organization_id", organizationId).eq("user_id", input.data.scoutUserId).eq("role", "scout").maybeSingle();
+      if (scoutError || !scout) return { error: "Choose a Scout-role user from this organization." };
+    }
+    const { data: existing, error: existingError } = await database.from("scouting_assignments").select("id,scout_user_id").eq("match_id", match.id).eq("team_id", input.data.teamId).eq("assignment_type", "objective");
+    if (existingError) return { error: "Couldn’t read the current assignment." };
+    if (existing?.length) {
+      const { data: submitted, error: submittedError } = await database.from("match_submissions").select("id").in("assignment_id", existing.map((assignment) => assignment.id)).limit(1);
+      if (submittedError) return { error: "Couldn’t check existing submissions." };
+      if (submitted?.length) return { error: "This assignment already has a submission and cannot be reassigned." };
+    }
+    if (input.data.scoutUserId) {
+      if (existing?.length === 1 && existing[0].scout_user_id === input.data.scoutUserId) return { success: "Scout is already assigned." };
+      const { error: insertError } = await database.from("scouting_assignments").insert({ match_id: match.id, team_id: input.data.teamId, scout_user_id: input.data.scoutUserId, assignment_type: "objective" });
+      if (insertError) return importDatabaseError("the new assignment", insertError);
+    }
+    if (existing?.length) {
+      const { error: deleteError } = await database.from("scouting_assignments").delete().in("id", existing.map((assignment) => assignment.id));
+      if (deleteError) return importDatabaseError("the previous assignment", deleteError);
+    }
+    revalidatePath("/admin/assignments");
+    revalidatePath(`/events/${match.event_id}/matches`);
+    revalidatePath("/scout/assignments");
+    revalidatePath("/dashboard");
+    return { success: input.data.scoutUserId ? "Scout assigned." : "Assignment cleared." };
+  } catch {
+    return { error: "Admin access and the server secret are required to manage assignments." };
+  }
+}
+
 export async function publishDefaultForm(_: ActionState): Promise<ActionState> { try { const {supabase,organizationId}=await adminContext(); const {data:latest}=await supabase.from("form_definitions").select("version").eq("organization_id",organizationId).eq("name",DEFAULT_2026_FORM.title).order("version",{ascending:false}).limit(1).maybeSingle();const {error}=await supabase.from("form_definitions").insert({organization_id:organizationId,name:DEFAULT_2026_FORM.title,version:(latest?.version??0)+1,schema_json:DEFAULT_2026_FORM,is_active:true});return error?{error:"Couldn’t publish the form."}:{success:"New form version published."}; }catch{return{error:"Admin access is required."};} }
 
 export async function publishFormDefinition(_: ActionState, formData: FormData): Promise<ActionState> { try { const raw=String(formData.get("schema")??"");let json:unknown;try{json=JSON.parse(raw)}catch{return{error:"The form schema must be valid JSON."};}const form=formDefinitionSchema.safeParse(json);if(!form.success)return{error:"The schema needs a title, game year, and valid field definitions."};const {supabase,organizationId}=await adminContext();const {data:latest}=await supabase.from("form_definitions").select("version").eq("organization_id",organizationId).eq("name",form.data.title).order("version",{ascending:false}).limit(1).maybeSingle();const {error}=await supabase.from("form_definitions").insert({organization_id:organizationId,name:form.data.title,version:(latest?.version??0)+1,schema_json:form.data,is_active:true});return error?{error:"Couldn’t publish the form."}:{success:`Published ${form.data.title} v${(latest?.version??0)+1}.`};}catch{return{error:"Admin access is required."};} }
