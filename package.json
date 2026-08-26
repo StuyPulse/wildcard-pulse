@@ -1,0 +1,11 @@
+{
+  "name": "wildcard-pulse",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "set -a; . ./.env.local; set +a; npm run dev --workspace=@wildcard/web",
+    "build": "set -a; . ./.env.local; set +a; npm run build --workspace=@wildcard/web",
+    "lint": "npm run lint --workspace=@wildcard/web",
+    "typecheck": "npm run typecheck --workspace=@wildcard/web"
+  }
+}
