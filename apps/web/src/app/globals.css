@@ -76,6 +76,16 @@
   .counter { @apply flex items-center gap-2.5; }
   .counter button { @apply h-[34px] w-[34px] rounded-md border border-stuypulse-border bg-stuypulse-elevated font-extrabold text-stuypulse-text transition-colors hover:bg-stuypulse-red hover:text-stuypulse-text; }
   .counter output { @apply min-w-[25px] text-center text-lg font-semibold; font-family: 'DM Mono', monospace; }
+  .counter input { @apply w-20 rounded-md border border-stuypulse-border bg-stuypulse-bg px-2 py-1 text-center; }
+  .field-map { @apply grid grid-cols-3 gap-2 rounded-panel border border-stuypulse-border bg-stuypulse-bg p-3; }
+  .field-map.flipped { direction: rtl; }
+  .spot { @apply min-h-16 rounded-lg border border-stuypulse-border bg-white/90 p-2 text-xs font-bold text-slate-900 transition-colors hover:bg-stuypulse-redHover hover:text-white; }
+  .spot.red { @apply bg-stuypulse-red text-white; }
+  .spot.blue { @apply bg-sky-600 text-white; }
+  .team-picker { @apply mt-3 flex flex-wrap gap-2; }
+  .team-pick { @apply rounded-md border border-stuypulse-border bg-stuypulse-bg px-3 py-2 text-xs font-bold; }
+  .team-pick.red { @apply border-stuypulse-red bg-stuypulse-red text-white; }
+  .team-pick.blue { @apply border-sky-500 bg-sky-600 text-white; }
 
   .auth { @apply grid min-h-screen grid-cols-[1.15fr_.85fr]; }
   .auth-aside { @apply relative overflow-hidden bg-stuypulse-surface p-14; background-image: radial-gradient(circle at 20% 15%, theme('colors.stuypulse.redPressed'), theme('colors.stuypulse.surface') 52%, theme('colors.stuypulse.bg')); }
