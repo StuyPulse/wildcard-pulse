@@ -77,9 +77,9 @@
   .counter button { @apply h-[34px] w-[34px] rounded-md border border-stuypulse-border bg-stuypulse-elevated font-extrabold text-stuypulse-text transition-colors hover:bg-stuypulse-red hover:text-stuypulse-text; }
   .counter output { @apply min-w-[25px] text-center text-lg font-semibold; font-family: 'DM Mono', monospace; }
   .counter input { @apply w-20 rounded-md border border-stuypulse-border bg-stuypulse-bg px-2 py-1 text-center; }
-  .field-map { @apply grid grid-cols-3 gap-2 rounded-panel border border-stuypulse-border bg-stuypulse-bg p-3; }
+  .field-map { @apply relative grid grid-cols-3 gap-2 overflow-hidden rounded-panel border border-stuypulse-border bg-stuypulse-bg p-3; background-image: radial-gradient(circle at 50% 50%, rgba(255,54,54,.22) 0 11%, transparent 11.5%), linear-gradient(90deg, transparent 49.6%, rgba(255,255,255,.14) 50%, transparent 50.4%), linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px); background-size:auto,auto,33.333% 33.333%,33.333% 33.333%; }
   .field-map.flipped { direction: rtl; }
-  .spot { @apply min-h-16 rounded-lg border border-stuypulse-border bg-white/90 p-2 text-xs font-bold text-slate-900 transition-colors hover:bg-stuypulse-redHover hover:text-white; }
+  .spot { @apply z-10 min-h-16 rounded-lg border border-stuypulse-border bg-stuypulse-surface/95 p-2 text-xs font-bold text-stuypulse-text transition-colors hover:bg-stuypulse-redHover hover:text-white; }
   .spot.red { @apply bg-stuypulse-red text-white; }
   .spot.blue { @apply bg-sky-600 text-white; }
   .team-picker { @apply mt-3 flex flex-wrap gap-2; }
