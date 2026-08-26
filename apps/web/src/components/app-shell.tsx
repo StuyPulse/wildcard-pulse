@@ -2,14 +2,19 @@ import Link from "next/link";
 import { BarChart3, CalendarDays, ClipboardList, Gauge, LayoutDashboard, Radio, Settings, ShieldCheck, Users } from "lucide-react";
 import { BrandLogo } from "./brand-logo";
 import { SignOutButton } from "./sign-out-button";
+import { createClient } from "@/lib/supabase/server";
+import { getActiveEvent } from "@/lib/active-event";
 
-const navigation = [
-  ["Workspace", [["Dashboard", "/dashboard", LayoutDashboard], ["Events", "/events", CalendarDays], ["Teams", "/events", Users], ["Matches", "/events", ClipboardList]]],
-  ["Scout", [["My assignments", "/scout/assignments", Radio], ["Submissions", "/submissions", BarChart3]]],
-  ["Admin", [["Event import", "/admin/sync", ClipboardList], ["Assignments", "/admin/assignments", Radio], ["Users & roles", "/admin/users", ShieldCheck], ["Form builder", "/admin/forms", Settings]]],
-] as const;
-
-export function AppShell({ children, active = "Dashboard" }: { children: React.ReactNode; active?: string }) {
+export async function AppShell({ children, active = "Dashboard" }: { children: React.ReactNode; active?: string }) {
+  const supabase = await createClient();
+  const [{ data: { user } }, activeEvent] = await Promise.all([supabase.auth.getUser(), getActiveEvent()]);
+  const { data: membership } = user ? await supabase.from("organization_members").select("role").eq("user_id", user.id).in("role", ["admin", "developer"]).limit(1).maybeSingle() : { data: null };
+  const eventHref = activeEvent ? `/events/${activeEvent.event_key}` : "/events";
+  const navigation = [
+    ["Workspace", [["Dashboard", "/dashboard", LayoutDashboard], ["Events", "/events", CalendarDays], ["Teams", `${eventHref}/teams`, Users], ["Matches", `${eventHref}/matches`, ClipboardList]]],
+    ["Scout", [["My assignments", "/scout/assignments", Radio], ["Submissions", "/submissions", BarChart3]]],
+    ...(membership ? [["Admin", [["Event import", "/admin/sync", ClipboardList], ["Assignments", "/admin/assignments", Radio], ["Users & roles", "/admin/users", ShieldCheck], ["Form builder", "/admin/forms", Settings]]] as const] : []),
+  ] as const;
   return <div className="shell"><aside className="sidebar"><Link href="/dashboard" className="brand"><BrandLogo/><span className="brand-copy">pulse<small>STUYPULSE · 694</small></span></Link>
     {navigation.map(([label, items]) => <div key={label}><div className="nav-label">{label}</div>{items.map(([name, href, Icon]) => <Link className={`nav-item ${name === active ? "active" : ""}`} href={href} key={name}><Icon size={17}/><span>{name}</span></Link>)}</div>)}
     <SignOutButton />
