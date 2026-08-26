@@ -2,9 +2,9 @@ import Link from "next/link";
 import { BarChart3, CalendarDays, ClipboardList, Gauge, LayoutDashboard, Radio, Settings, ShieldCheck, Users } from "lucide-react";
 
 const navigation = [
-  ["Workspace", [["Dashboard", "/dashboard", LayoutDashboard], ["Events", "/events", CalendarDays], ["Teams", "/events/demo/teams", Users], ["Matches", "/events/demo/matches", ClipboardList]]],
+  ["Workspace", [["Dashboard", "/dashboard", LayoutDashboard], ["Events", "/events", CalendarDays], ["Teams", "/events", Users], ["Matches", "/events", ClipboardList]]],
   ["Scout", [["My assignments", "/scout/assignments", Radio], ["Submissions", "/submissions", BarChart3]]],
-  ["Admin", [["Users & roles", "/admin/users", ShieldCheck], ["Form builder", "/admin/forms", Settings]]],
+  ["Admin", [["Event import", "/admin/sync", ClipboardList], ["Users & roles", "/admin/users", ShieldCheck], ["Form builder", "/admin/forms", Settings]]],
 ] as const;
 
 export function AppShell({ children, active = "Dashboard" }: { children: React.ReactNode; active?: string }) {

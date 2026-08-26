@@ -3,6 +3,7 @@ import { z } from "zod";
 import { DEFAULT_2026_FORM, formDefinitionSchema, organizationRoleSchema } from "@wildcard/shared";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { revalidatePath } from "next/cache";
 
 export type ActionState = { error?: string; success?: string };
 async function adminContext() {
@@ -18,25 +19,164 @@ export async function createEvent(_: ActionState, formData: FormData): Promise<A
   try { const input=z.object({name:z.string().trim().min(3).max(160),eventKey:z.string().trim().regex(/^[0-9]{4}[a-z0-9_]+$/),startsAt:z.string().optional(),endsAt:z.string().optional()}).safeParse({name:formData.get("name"),eventKey:formData.get("eventKey"),startsAt:formData.get("startsAt")||undefined,endsAt:formData.get("endsAt")||undefined}); if(!input.success)return{error:"Use a valid TBA event key, such as 2026nytr."}; const {supabase,organizationId}=await adminContext();const {error}=await supabase.from("events").insert({organization_id:organizationId,name:input.data.name,event_key:input.data.eventKey,starts_at:input.data.startsAt||null,ends_at:input.data.endsAt||null,status:"upcoming"});return error?{error:"Couldn’t create the event."}:{success:"Event created."}; } catch { return {error:"Admin access is required."}; }
 }
 
+export async function deleteEvent(_: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    const input = z.object({ eventId: z.string().uuid(), eventName: z.string().trim().min(1).max(160) }).safeParse({ eventId: formData.get("eventId"), eventName: formData.get("eventName") });
+    if (!input.success) return { error: "This event could not be identified." };
+    const { supabase, organizationId } = await adminContext();
+    const { data: submissions, error: submissionsError } = await supabase.from("match_submissions").select("id").eq("event_id", input.data.eventId).limit(1);
+    if (submissionsError) return { error: "Couldn’t check whether the event has submissions." };
+    if (submissions?.length) return { error: "This event has scouting submissions, so it is protected from deletion." };
+    const { data: deleted, error } = await supabase.from("events").delete().eq("id", input.data.eventId).eq("organization_id", organizationId).select("id").maybeSingle();
+    if (error || !deleted) return { error: "Couldn’t delete the event. It may have changed or you may not have access." };
+    revalidatePath("/events");
+    revalidatePath("/admin/sync");
+    return { success: `${input.data.eventName} was deleted.` };
+  } catch { return { error: "Admin access is required." }; }
+}
+
 export async function publishDefaultForm(_: ActionState): Promise<ActionState> { try { const {supabase,organizationId}=await adminContext(); const {data:latest}=await supabase.from("form_definitions").select("version").eq("organization_id",organizationId).eq("name",DEFAULT_2026_FORM.title).order("version",{ascending:false}).limit(1).maybeSingle();const {error}=await supabase.from("form_definitions").insert({organization_id:organizationId,name:DEFAULT_2026_FORM.title,version:(latest?.version??0)+1,schema_json:DEFAULT_2026_FORM,is_active:true});return error?{error:"Couldn’t publish the form."}:{success:"New form version published."}; }catch{return{error:"Admin access is required."};} }
 
 export async function publishFormDefinition(_: ActionState, formData: FormData): Promise<ActionState> { try { const raw=String(formData.get("schema")??"");let json:unknown;try{json=JSON.parse(raw)}catch{return{error:"The form schema must be valid JSON."};}const form=formDefinitionSchema.safeParse(json);if(!form.success)return{error:"The schema needs a title, game year, and valid field definitions."};const {supabase,organizationId}=await adminContext();const {data:latest}=await supabase.from("form_definitions").select("version").eq("organization_id",organizationId).eq("name",form.data.title).order("version",{ascending:false}).limit(1).maybeSingle();const {error}=await supabase.from("form_definitions").insert({organization_id:organizationId,name:form.data.title,version:(latest?.version??0)+1,schema_json:form.data,is_active:true});return error?{error:"Couldn’t publish the form."}:{success:`Published ${form.data.title} v${(latest?.version??0)+1}.`};}catch{return{error:"Admin access is required."};} }
 
 export async function inviteMember(_: ActionState, formData: FormData): Promise<ActionState> { try {const input=z.object({email:z.string().email().toLowerCase().refine(email=>email.endsWith("@stuypulse.com")),role:organizationRoleSchema}).safeParse({email:formData.get("email"),role:formData.get("role")});if(!input.success)return{error:"Invitees must use a @stuypulse.com email and a valid role."};const {supabase,organizationId}=await adminContext();const admin=createAdminClient();const origin=process.env.NEXT_PUBLIC_SITE_URL??"http://localhost:3000";const {data,error}=await admin.auth.admin.inviteUserByEmail(input.data.email,{redirectTo:`${origin}/auth/callback`});if(error||!data.user)return{error:"Couldn’t send the invitation."};const {error:membershipError}=await supabase.from("organization_members").upsert({organization_id:organizationId,user_id:data.user.id,role:input.data.role});return membershipError?{error:"Invitation sent, but the role assignment failed."}:{success:`Invitation sent to ${input.data.email}.`};}catch{return{error:"Admin access or server secret is required."};} }
 
-type TbaTeam = { key:string; team_number:number; nickname:string | null };
-type TbaMatch = { key:string; comp_level:string; match_number:number; set_number:number; time:number; actual_time:number|null; alliances:{red:{team_keys:string[]};blue:{team_keys:string[]}} };
-export async function importTbaEvent(_: ActionState, formData: FormData): Promise<ActionState> { try {
-  const parsed=z.object({eventKey:z.string().trim().regex(/^[0-9]{4}[a-z0-9_]+$/)}).safeParse({eventKey:formData.get("eventKey")}); if(!parsed.success)return{error:"Enter a valid TBA event key."};
-  const key=process.env.TBA_AUTH_KEY;if(!key)return{error:"TBA_AUTH_KEY is not configured on the server."};const {supabase,organizationId}=await adminContext();
-  const {data:existing}=await supabase.from("events").select("id,tba_etag").eq("organization_id",organizationId).eq("event_key",parsed.data.eventKey).maybeSingle();
-  const eventResponse=await fetch(`https://www.thebluealliance.com/api/v3/event/${parsed.data.eventKey}`,{headers:{"X-TBA-Auth-Key":key,...(existing?.tba_etag?{"If-None-Match":existing.tba_etag}:{})},cache:"no-store"});
-  if(eventResponse.status===304)return{success:"TBA reports no event changes since the last sync."};if(!eventResponse.ok)return{error:"TBA could not find or return that event."};
-  const event=await eventResponse.json() as {name:string;start_date:string;end_date:string}; const etag=eventResponse.headers.get("etag");
-  const {data:eventRow,error:eventError}=await supabase.from("events").upsert({organization_id:organizationId,event_key:parsed.data.eventKey,name:event.name,starts_at:`${event.start_date}T00:00:00Z`,ends_at:`${event.end_date}T23:59:59Z`,status:"upcoming",tba_etag:etag,tba_last_synced_at:new Date().toISOString()},{onConflict:"organization_id,event_key"}).select("id").single();if(eventError||!eventRow)return{error:"Couldn’t save the event."};
-  const [teamsResponse,matchesResponse]=await Promise.all([fetch(`https://www.thebluealliance.com/api/v3/event/${parsed.data.eventKey}/teams/simple`,{headers:{"X-TBA-Auth-Key":key},cache:"no-store"}),fetch(`https://www.thebluealliance.com/api/v3/event/${parsed.data.eventKey}/matches/simple`,{headers:{"X-TBA-Auth-Key":key},cache:"no-store"})]);if(!teamsResponse.ok||!matchesResponse.ok)return{error:"Event saved, but TBA teams or schedule could not be imported."};
-  const teams=await teamsResponse.json() as TbaTeam[];const matches=await matchesResponse.json() as TbaMatch[];const {error:teamsError}=await supabase.from("teams").upsert(teams.map(t=>({organization_id:organizationId,team_number:t.team_number,name:t.nickname||`FRC Team ${t.team_number}`})),{onConflict:"organization_id,team_number"});if(teamsError)return{error:"Event saved, but teams could not be imported."};
-  const {data:dbTeams}=await supabase.from("teams").select("id,team_number").eq("organization_id",organizationId);const byNumber=new Map((dbTeams??[]).map(t=>[t.team_number,t.id]));const numberFromKey=(teamKey:string)=>Number(teamKey.replace("frc",""));
-  const {error:linksError}=await supabase.from("event_teams").upsert(teams.flatMap(t=>{const id=byNumber.get(t.team_number);return id?[{event_id:eventRow.id,team_id:id}]:[]}),{onConflict:"event_id,team_id"});if(linksError)return{error:"Event and teams saved, but event links could not be imported."};
-  const mapped=matches.map(m=>({event_id:eventRow.id,match_number:m.match_number,match_type:m.comp_level==="qm"?"qualification":m.comp_level==="pr"?"practice":"playoff",red_teams:m.alliances.red.team_keys.map(numberFromKey).map(n=>byNumber.get(n)).filter((id):id is string=>Boolean(id)),blue_teams:m.alliances.blue.team_keys.map(numberFromKey).map(n=>byNumber.get(n)).filter((id):id is string=>Boolean(id)),scheduled_at:m.time?new Date(m.time*1000).toISOString():null,status:m.actual_time?"played":"scheduled"}));const {error:matchesError}=await supabase.from("matches").upsert(mapped,{onConflict:"event_id,match_type,match_number"});return matchesError?{error:"Teams imported, but matches could not be saved."}:{success:`Imported ${teams.length} teams and ${matches.length} matches from TBA.`};
-}catch{return{error:"The import failed. Confirm admin access and try again."};} }
+const tbaEventSchema = z.object({ name: z.string().min(1), start_date: z.string().min(1), end_date: z.string().min(1) });
+const tbaTeamSchema = z.object({ key: z.string().regex(/^frc\d+$/), team_number: z.number().int().positive(), nickname: z.string().nullable() });
+const tbaMatchSchema = z.object({
+  key: z.string().min(1), comp_level: z.string(), match_number: z.number().int().positive(), time: z.number().nullable().optional(), actual_time: z.number().nullable().optional(),
+  alliances: z.object({ red: z.object({ team_keys: z.array(z.string().regex(/^frc\d+$/)) }), blue: z.object({ team_keys: z.array(z.string().regex(/^frc\d+$/)) }) }),
+});
+
+function tbaHeaders(key: string, etag?: string | null) {
+  return { "X-TBA-Auth-Key": key, ...(etag ? { "If-None-Match": etag } : {}) };
+}
+
+function tbaResponseError(response: Response, resource: string): ActionState | null {
+  if (response.ok || response.status === 304) return null;
+  if (response.status === 401 || response.status === 403) return { error: "TBA rejected the read key. Replace TBA_AUTH_KEY in the server environment and restart the app." };
+  if (response.status === 404) return { error: `TBA could not find this event while loading ${resource}. Copy the event key exactly from the TBA URL.` };
+  if (response.status === 429) return { error: "TBA is rate-limiting requests. Wait a minute and try again." };
+  return { error: `TBA returned HTTP ${response.status} while loading ${resource}. Try again shortly.` };
+}
+
+function importDatabaseError(stage: string, error: { message: string; code?: string } | null): ActionState {
+  console.error(`TBA import database failure at ${stage}`, error);
+  const detail = error?.code ? ` (${error.code})` : "";
+  return { error: `The import could not save ${stage}${detail}. Check that the latest Supabase migrations have been applied, then try again.` };
+}
+
+export async function importTbaEvent(_: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    const parsed = z.object({ eventKey: z.string().trim().toLowerCase().regex(/^[0-9]{4}[a-z0-9_]+$/) }).safeParse({ eventKey: formData.get("eventKey") });
+    if (!parsed.success) return { error: "Enter a valid TBA event key, such as 2026nytr." };
+
+    const tbaKey = process.env.TBA_AUTH_KEY;
+    if (!tbaKey) return { error: "TBA_AUTH_KEY is not configured on the server." };
+    const { organizationId } = await adminContext();
+    const database = createAdminClient();
+    const { data: existing, error: existingError } = await database
+      .from("events")
+      .select("id,tba_etag,tba_teams_etag,tba_matches_etag")
+      .eq("organization_id", organizationId)
+      .eq("event_key", parsed.data.eventKey)
+      .maybeSingle();
+    if (existingError) return importDatabaseError("the existing event", existingError);
+
+    const baseUrl = `https://www.thebluealliance.com/api/v3/event/${parsed.data.eventKey}`;
+    const [eventResponse, teamsResponse, matchesResponse] = await Promise.all([
+      fetch(baseUrl, { headers: tbaHeaders(tbaKey, existing?.tba_etag), cache: "no-store" }),
+      fetch(`${baseUrl}/teams/simple`, { headers: tbaHeaders(tbaKey, existing?.tba_teams_etag), cache: "no-store" }),
+      fetch(`${baseUrl}/matches/simple`, { headers: tbaHeaders(tbaKey, existing?.tba_matches_etag), cache: "no-store" }),
+    ]);
+    for (const [response, resource] of [[eventResponse, "the event"], [teamsResponse, "teams"], [matchesResponse, "the match schedule"]] as const) {
+      const failure = tbaResponseError(response, resource);
+      if (failure) return failure;
+    }
+    if (!existing && (eventResponse.status === 304 || teamsResponse.status === 304 || matchesResponse.status === 304)) {
+      return { error: "TBA returned cached data before the event was created locally. Retry the import once." };
+    }
+
+    let eventId = existing?.id;
+    if (eventResponse.status !== 304) {
+      const event = tbaEventSchema.safeParse(await eventResponse.json());
+      if (!event.success) return { error: "TBA returned an event with an unexpected format. Try again shortly." };
+      const { data: savedEvent, error } = await database.from("events").upsert({
+        organization_id: organizationId,
+        event_key: parsed.data.eventKey,
+        name: event.data.name,
+        starts_at: `${event.data.start_date}T00:00:00Z`,
+        ends_at: `${event.data.end_date}T23:59:59Z`,
+        status: "upcoming",
+      }, { onConflict: "organization_id,event_key" }).select("id").single();
+      if (error || !savedEvent) return importDatabaseError("the event", error);
+      eventId = savedEvent.id;
+    }
+    if (!eventId) return { error: "The existing event could not be identified. Retry the import once." };
+
+    let importedTeams: z.infer<typeof tbaTeamSchema>[] | null = null;
+    let teamCount = 0;
+    if (teamsResponse.status !== 304) {
+      const parsedTeams = z.array(tbaTeamSchema).safeParse(await teamsResponse.json());
+      if (!parsedTeams.success) return { error: "TBA returned teams with an unexpected format. Try again shortly." };
+      importedTeams = parsedTeams.data;
+      teamCount = importedTeams.length;
+      if (importedTeams.length) {
+        const { error } = await database.from("teams").upsert(importedTeams.map((team) => ({
+          organization_id: organizationId, team_number: team.team_number, name: team.nickname || `FRC Team ${team.team_number}`,
+        })), { onConflict: "organization_id,team_number" });
+        if (error) return importDatabaseError("teams", error);
+      }
+    }
+
+    const { data: databaseTeams, error: databaseTeamsError } = await database.from("teams").select("id,team_number").eq("organization_id", organizationId);
+    if (databaseTeamsError) return importDatabaseError("the team directory", databaseTeamsError);
+    const teamIdByNumber = new Map((databaseTeams ?? []).map((team) => [team.team_number, team.id]));
+    const teamNumberFromKey = (teamKey: string) => Number(teamKey.slice(3));
+
+    if (importedTeams?.length) {
+      const teamLinks = importedTeams.map((team) => ({ event_id: eventId, team_id: teamIdByNumber.get(team.team_number) })).filter((link): link is { event_id: string; team_id: string } => Boolean(link.team_id));
+      if (teamLinks.length !== importedTeams.length) return { error: "TBA returned a participant that was not saved. Retry the import once." };
+      const { error } = await database.from("event_teams").upsert(teamLinks, { onConflict: "event_id,team_id" });
+      if (error) return importDatabaseError("event team links", error);
+    }
+
+    let matchCount = 0;
+    if (matchesResponse.status !== 304) {
+      const parsedMatches = z.array(tbaMatchSchema).safeParse(await matchesResponse.json());
+      if (!parsedMatches.success) return { error: "TBA returned a schedule with an unexpected format. Try again shortly." };
+      matchCount = parsedMatches.data.length;
+      const missingTeam = parsedMatches.data.flatMap((match) => [...match.alliances.red.team_keys, ...match.alliances.blue.team_keys]).map(teamNumberFromKey).find((number) => !teamIdByNumber.has(number));
+      if (missingTeam) return { error: `TBA's schedule references team ${missingTeam}, but that team was not saved. Retry the import once.` };
+      if (parsedMatches.data.length) {
+        const { error } = await database.from("matches").upsert(parsedMatches.data.map((match) => ({
+          event_id: eventId,
+          tba_match_key: match.key,
+          match_number: match.match_number,
+          match_type: match.comp_level === "qm" ? "qualification" : match.comp_level === "pr" ? "practice" : "playoff",
+          red_teams: match.alliances.red.team_keys.map(teamNumberFromKey).map((number) => teamIdByNumber.get(number)!),
+          blue_teams: match.alliances.blue.team_keys.map(teamNumberFromKey).map((number) => teamIdByNumber.get(number)!),
+          scheduled_at: match.time ? new Date(match.time * 1000).toISOString() : null,
+          status: match.actual_time ? "played" : "scheduled",
+        })), { onConflict: "event_id,tba_match_key" });
+        if (error) return importDatabaseError("the match schedule", error);
+      }
+    }
+
+    const { error: metadataError } = await database.from("events").update({
+      tba_etag: eventResponse.status === 304 ? existing?.tba_etag ?? null : eventResponse.headers.get("etag") ?? existing?.tba_etag ?? null,
+      tba_teams_etag: teamsResponse.status === 304 ? existing?.tba_teams_etag ?? null : teamsResponse.headers.get("etag") ?? existing?.tba_teams_etag ?? null,
+      tba_matches_etag: matchesResponse.status === 304 ? existing?.tba_matches_etag ?? null : matchesResponse.headers.get("etag") ?? existing?.tba_matches_etag ?? null,
+      tba_last_synced_at: new Date().toISOString(),
+    }).eq("id", eventId);
+    if (metadataError) return importDatabaseError("sync metadata", metadataError);
+
+    revalidatePath("/events");
+    revalidatePath("/admin/sync");
+    revalidatePath(`/events/${eventId}/matches`);
+    return { success: `Synced ${teamCount} teams and ${matchCount} matches from TBA. Unchanged data was kept from the previous sync.` };
+  } catch (error) {
+    console.error("TBA import failed", error);
+    return { error: "The import failed before it could finish. Check the server logs for the exact failure, then try again." };
+  }
+}

@@ -17,6 +17,16 @@ Copy `.env.example` to `.env.local` and provide only the publishable browser cre
 
 Migrations are in [`supabase/migrations`](supabase/migrations). The remote project currently associated with this repo is `wutzpdkmlafwqqgxmqlh` (**Wildcard**). Apply migrations only through the Supabase workflow; do not paste a secret key into source code.
 
+After authenticating the Supabase CLI, apply any new migrations before deploying the web app:
+
+```bash
+npx supabase login
+npx supabase link --project-ref wutzpdkmlafwqqgxmqlh
+npx supabase db push
+```
+
+Set `TBA_AUTH_KEY` and `SUPABASE_SECRET_KEY` as server-only environment variables in Vercel as well as in `.env.local`. TBA imports will report a clear setup error if either is missing.
+
 The first person who creates an Auth account must be made an admin through a trusted Supabase SQL session. See [roles and security](docs/roles-and-security.md) for the exact onboarding query.
 
 ## Useful checks

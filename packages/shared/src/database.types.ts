@@ -59,6 +59,8 @@ export type Database = {
           status: Database["public"]["Enums"]["event_status"]
           tba_etag: string | null
           tba_last_synced_at: string | null
+          tba_matches_etag: string | null
+          tba_teams_etag: string | null
           updated_at: string
         }
         Insert: {
@@ -72,6 +74,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["event_status"]
           tba_etag?: string | null
           tba_last_synced_at?: string | null
+          tba_matches_etag?: string | null
+          tba_teams_etag?: string | null
           updated_at?: string
         }
         Update: {
@@ -85,6 +89,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["event_status"]
           tba_etag?: string | null
           tba_last_synced_at?: string | null
+          tba_matches_etag?: string | null
+          tba_teams_etag?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -233,6 +239,7 @@ export type Database = {
           red_teams: string[]
           scheduled_at: string | null
           status: Database["public"]["Enums"]["match_status"]
+          tba_match_key: string
           updated_at: string
         }
         Insert: {
@@ -245,6 +252,7 @@ export type Database = {
           red_teams?: string[]
           scheduled_at?: string | null
           status?: Database["public"]["Enums"]["match_status"]
+          tba_match_key: string
           updated_at?: string
         }
         Update: {
@@ -257,6 +265,7 @@ export type Database = {
           red_teams?: string[]
           scheduled_at?: string | null
           status?: Database["public"]["Enums"]["match_status"]
+          tba_match_key?: string
           updated_at?: string
         }
         Relationships: [
