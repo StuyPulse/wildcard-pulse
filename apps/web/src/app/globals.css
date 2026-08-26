@@ -25,7 +25,8 @@
   .sidebar { @apply fixed inset-y-0 left-0 w-[252px] border-r border-stuypulse-border bg-stuypulse-surface px-3.5 py-6; }
   .main { @apply ml-[252px] w-[calc(100%-252px)] max-w-[1560px] px-10 pb-14 pt-7; }
   .brand { @apply flex items-center gap-2 px-2.5 pb-7 text-[22px] font-extrabold tracking-[-0.07em]; }
-  .brand-mark { @apply grid h-[30px] w-[30px] place-items-center rounded-[7px] bg-stuypulse-red text-[15px] tracking-[-0.15em] text-stuypulse-text shadow-panel; }
+  .brand-mark { @apply grid h-[34px] w-[34px] shrink-0 place-items-center; }
+  .brand-mark img { @apply block h-full w-full; }
   .brand small { @apply block text-[10px] font-bold tracking-[0.12em] text-stuypulse-textMuted; }
   .nav-label { @apply px-2.5 pb-2 pt-4 text-[10px] font-medium uppercase tracking-[0.14em] text-stuypulse-textMuted; font-family: 'DM Mono', monospace; }
   .nav-item { @apply my-0.5 flex items-center gap-3 rounded-lg px-2.5 py-2.5 text-sm font-semibold text-stuypulse-textMuted transition-colors hover:bg-stuypulse-elevated hover:text-stuypulse-text; }
