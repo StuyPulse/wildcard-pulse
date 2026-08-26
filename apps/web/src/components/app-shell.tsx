@@ -12,7 +12,7 @@ export async function AppShell({ children, active = "Dashboard" }: { children: R
   const eventHref = activeEvent ? `/events/${activeEvent.event_key}` : "/events";
   const navigation = [
     ["Workspace", [["Dashboard", "/dashboard", LayoutDashboard], ["Events", "/events", CalendarDays], ["Teams", `${eventHref}/teams`, Users], ["Matches", `${eventHref}/matches`, ClipboardList]]],
-    ["Scout", [["My assignments", "/scout/assignments", Radio], ["Submissions", "/submissions", BarChart3]]],
+    ["Scout", [["My assignments", "/scout/assignments", Radio], ["Manual scouting", "/scout/manual", ClipboardList], ["Submissions", "/submissions", BarChart3]]],
     ...(membership ? [["Admin", [["Event import", "/admin/sync", ClipboardList], ["Assignments", "/admin/assignments", Radio], ["Users & roles", "/admin/users", ShieldCheck], ["Form builder", "/admin/forms", Settings]]] as const] : []),
   ] as const;
   return <div className="shell"><aside className="sidebar"><Link href="/dashboard" className="brand"><BrandLogo/><span className="brand-copy">pulse<small>STUYPULSE · 694</small></span></Link>
