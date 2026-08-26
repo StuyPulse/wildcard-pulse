@@ -3,8 +3,27 @@ import { createServerClient } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code"); const url = request.nextUrl.clone(); url.pathname = "/dashboard";
-  if (!code) return NextResponse.redirect(url);
+  if (!code) {
+    url.pathname = "/auth/login";
+    url.searchParams.set("error", "Google sign-in did not return an authorization code. Please try again.");
+    return NextResponse.redirect(url);
+  }
   const response = NextResponse.redirect(url);
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, { cookies: { getAll: () => request.cookies.getAll(), setAll: (items) => items.forEach(({name, value, options}) => response.cookies.set(name, value, options)) }});
-  await supabase.auth.exchangeCodeForSession(code); return response;
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/auth/login";
+    loginUrl.searchParams.set("error", "Google sign-in could not be completed. Please try again.");
+    return NextResponse.redirect(loginUrl);
+  }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.email?.toLowerCase().endsWith("@stuypulse.com")) {
+    await supabase.auth.signOut();
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/auth/login";
+    loginUrl.searchParams.set("error", "Use your @stuypulse.com Google account to access Wildcard Pulse.");
+    return NextResponse.redirect(loginUrl);
+  }
+  return response;
 }

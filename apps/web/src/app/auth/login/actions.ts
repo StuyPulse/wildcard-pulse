@@ -20,7 +20,8 @@ export async function signUp(_: AuthState, formData: FormData): Promise<AuthStat
   if (!parsed.success) return { error: "Use your @stuypulse.com email and an 8+ character password." };
   const supabase = await createClient();
   const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const { error } = await supabase.auth.signUp({ ...parsed.data, options: { emailRedirectTo: `${origin}/auth/callback` } });
+  const { data, error } = await supabase.auth.signUp({ ...parsed.data, options: { emailRedirectTo: `${origin}/auth/callback` } });
   if (error) return { error: "We couldn't create that account. Try a different email." };
-  return { message: "Check your email to confirm your account, then sign in." };
+  if (data.user?.identities?.length === 0) return { message: "That account may already exist. Check your email for a confirmation link, or sign in instead." };
+  return { message: "Check your @stuypulse.com inbox to confirm your account, then sign in." };
 }
