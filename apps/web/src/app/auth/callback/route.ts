@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 export async function GET(request: NextRequest) {
-  const code = request.nextUrl.searchParams.get("code"); const url = request.nextUrl.clone(); url.pathname = "/dashboard";
+  const code = request.nextUrl.searchParams.get("code"); const url = request.nextUrl.clone();
+  const next = request.nextUrl.searchParams.get("next");
+  url.pathname = next === "/auth/reset-password" ? next : "/dashboard";
   if (!code) {
     url.pathname = "/auth/login";
     url.searchParams.set("error", "Google sign-in did not return an authorization code. Please try again.");

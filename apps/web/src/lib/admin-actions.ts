@@ -125,6 +125,18 @@ export async function publishFormDefinition(_: ActionState, formData: FormData):
 
 export async function inviteMember(_: ActionState, formData: FormData): Promise<ActionState> { try {const input=z.object({email:z.string().email().toLowerCase().refine(email=>email.endsWith("@stuypulse.com")),role:organizationRoleSchema}).safeParse({email:formData.get("email"),role:formData.get("role")});if(!input.success)return{error:"Invitees must use a @stuypulse.com email and a valid role."};const {supabase,organizationId}=await adminContext();const admin=createAdminClient();const origin=process.env.NEXT_PUBLIC_SITE_URL??"http://localhost:3000";const {data,error}=await admin.auth.admin.inviteUserByEmail(input.data.email,{redirectTo:`${origin}/auth/callback`});if(error||!data.user)return{error:"Couldn’t send the invitation."};const {error:membershipError}=await supabase.from("organization_members").upsert({organization_id:organizationId,user_id:data.user.id,role:input.data.role});return membershipError?{error:"Invitation sent, but the role assignment failed."}:{success:`Invitation sent to ${input.data.email}.`};}catch{return{error:"Admin access or server secret is required."};} }
 
+export async function setMemberRole(_: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    const input = z.object({ userId: z.string().uuid(), role: organizationRoleSchema }).safeParse({ userId: formData.get("userId"), role: formData.get("role") });
+    if (!input.success) return { error: "Choose a valid team role." };
+    const { supabase, organizationId } = await adminContext();
+    const { data: updated, error } = await supabase.from("organization_members").update({ role: input.data.role }).eq("organization_id", organizationId).eq("user_id", input.data.userId).select("role").maybeSingle();
+    if (error || !updated) return { error: "Couldn’t update that role. The final admin account cannot be demoted." };
+    revalidatePath("/admin/users"); revalidatePath("/admin/assignments"); revalidatePath("/dashboard");
+    return { success: `Role changed to ${updated.role}.` };
+  } catch { return { error: "Admin access is required." }; }
+}
+
 const tbaEventSchema = z.object({ name: z.string().min(1), start_date: z.string().min(1), end_date: z.string().min(1) });
 const tbaTeamSchema = z.object({ key: z.string().regex(/^frc\d+$/), team_number: z.number().int().positive(), nickname: z.string().nullable() });
 const tbaMatchSchema = z.object({
