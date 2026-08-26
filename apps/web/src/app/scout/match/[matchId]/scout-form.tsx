@@ -1,13 +1,85 @@
 "use client";
+
 import { useMemo, useState } from "react";
 import { DEFAULT_2026_FORM, type FormDefinition } from "@wildcard/shared";
 import { createClient } from "@/lib/supabase/client";
 
-type Props = { eventId: string; matchId: string; teamId: string; assignmentId: string | null; formVersion: number; form?: FormDefinition };
-export function ScoutForm({eventId,matchId,teamId,assignmentId,formVersion,form=DEFAULT_2026_FORM}:Props) {
-  const [payload,setPayload]=useState<Record<string,unknown>>({}); const [saving,setSaving]=useState(false); const [message,setMessage]=useState<string>();
-  const missing = useMemo(() => form.fields.filter(f=>f.required && (payload[f.id] === undefined || payload[f.id] === "")).map(f=>f.label),[form,payload]);
-  const set=(id:string,value:unknown)=>setPayload(old=>({...old,[id]:value}));
-  async function submit(status:"draft"|"submitted") { if(status === "submitted" && missing.length) return setMessage(`Complete: ${missing.join(", ")}.`); setSaving(true);setMessage(undefined);const supabase=createClient();const {data:{user}}=await supabase.auth.getUser(); if(!user){setMessage("Your session expired. Please sign in again.");setSaving(false);return;} const {error}=await supabase.from("match_submissions").insert({id:crypto.randomUUID(),event_id:eventId,match_id:matchId,team_id:teamId,scout_user_id:user.id,assignment_id:assignmentId,form_version:formVersion,payload,status,revision:0,submitted_at:status === "submitted" ? new Date().toISOString() : null}); if(!error && assignmentId && status === "submitted") await supabase.from("scouting_assignments").update({status:"complete",completed_at:new Date().toISOString()}).eq("id",assignmentId); setMessage(error ? "Couldn’t save your entry. Check your connection and try again." : status === "draft" ? "Draft saved." : "Submission received — thank you.");setSaving(false);}
-  return <><div className="card"><div className="card-head"><div><h2>{form.title}</h2><div className="muted">Version {formVersion} · fast entry is the priority</div></div><span className="tag live">LIVE FORM</span></div>{["auto","teleop","endgame","notes"].map(section=>{const fields=form.fields.filter(f=>f.section===section);if(!fields.length)return null;return <div className="section" key={section}><div className="section-title">{section === "auto" ? "Autonomous" : section === "teleop" ? "Teleop" : section === "endgame" ? "Endgame" : "Scout notes"}</div><div className="form-grid">{fields.map(field=><div className="field" key={field.id}><label>{field.label}{field.required && <span style={{color:"#dffb54"}}> *</span>}</label>{field.type === "counter" ? <div className="counter"><button type="button" onClick={()=>set(field.id,Math.max(0,Number(payload[field.id]??0)-1))}>−</button><output>{Number(payload[field.id]??0)}</output><button type="button" onClick={()=>set(field.id,Number(payload[field.id]??0)+1)}>+</button></div> : field.type === "boolean" ? <select value={String(payload[field.id]??"")} onChange={e=>set(field.id,e.target.value === "true")}><option value="">Select…</option><option value="true">Yes</option><option value="false">No</option></select> : field.type === "select" ? <select value={String(payload[field.id]??"")} onChange={e=>set(field.id,e.target.value)}><option value="">Select…</option>{field.options?.map(option=><option key={option}>{option}</option>)}</select> : field.type === "rating" ? <select value={String(payload[field.id]??"")} onChange={e=>set(field.id,Number(e.target.value))}><option value="">Not rated</option>{[1,2,3,4,5].map(n=><option value={n} key={n}>{n} / 5</option>)}</select> : <textarea value={String(payload[field.id]??"")} onChange={e=>set(field.id,e.target.value)} placeholder="Useful observations only…"/>}</div>)}</div></div>})}</div><div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:16}}><button className="button secondary" onClick={()=>submit("draft")} disabled={saving}>Save draft</button><button className="button" onClick={()=>submit("submitted")} disabled={saving}>{saving ? "Saving…" : "Submit match"}</button></div>{message && <p className={message.includes("received")||message.includes("saved") ? "trend" : "error"}>{message}</p>}</>;
+type Submission = { id: string; payload: Record<string, unknown>; revision: number; status: "draft" | "submitted" | "corrected" | "invalid" };
+type Props = { eventId: string; matchId: string; teamId: string; assignmentId: string; formVersion: number; form?: FormDefinition; submission?: Submission };
+
+function payloadRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+export function ScoutForm({ eventId, matchId, teamId, assignmentId, formVersion, form = DEFAULT_2026_FORM, submission }: Props) {
+  const [payload, setPayload] = useState<Record<string, unknown>>(() => payloadRecord(submission?.payload));
+  const [submissionId] = useState(() => {
+    if (submission?.id) return submission.id;
+    if (typeof window === "undefined") return "";
+    const storageKey = `wildcard-pulse:submission:${assignmentId}`;
+    const id = window.localStorage.getItem(storageKey) ?? crypto.randomUUID();
+    window.localStorage.setItem(storageKey, id);
+    return id;
+  });
+  const [revision, setRevision] = useState(submission?.revision ?? 0);
+  const [isLocked, setIsLocked] = useState(Boolean(submission && submission.status !== "draft"));
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string>();
+  const missing = useMemo(() => form.fields.filter((field) => field.required && (payload[field.id] === undefined || payload[field.id] === "")).map((field) => field.label), [form, payload]);
+  const set = (id: string, value: unknown) => setPayload((current) => ({ ...current, [id]: value }));
+
+  async function submit(status: "draft" | "submitted") {
+    if (!submissionId || saving || isLocked) return;
+    if (status === "submitted" && missing.length) return setMessage(`Complete: ${missing.join(", ")}.`);
+    setSaving(true);
+    setMessage(undefined);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setMessage("Your session expired. Please sign in again.");
+      setSaving(false);
+      return;
+    }
+    const submittedAt = status === "submitted" ? new Date().toISOString() : null;
+    const { error } = await supabase.from("match_submissions").upsert({
+      id: submissionId,
+      event_id: eventId,
+      match_id: matchId,
+      team_id: teamId,
+      scout_user_id: user.id,
+      assignment_id: assignmentId,
+      form_version: formVersion,
+      payload,
+      status,
+      revision,
+      submitted_at: submittedAt,
+    }, { onConflict: "id" });
+    if (error) {
+      setMessage("Couldn’t save your entry. Check your connection and try again.");
+      setSaving(false);
+      return;
+    }
+    if (status === "submitted") {
+      const { error: assignmentError } = await supabase.from("scouting_assignments").update({ status: "complete", completed_at: submittedAt }).eq("id", assignmentId);
+      setIsLocked(true);
+      setMessage(assignmentError ? "Submission received. Refresh your assignments if its status has not updated." : "Submission received — thank you.");
+    } else {
+      setRevision((current) => current + 1);
+      setMessage("Draft saved.");
+    }
+    setSaving(false);
+  }
+
+  return <>
+    <div className="card">
+      <div className="card-head"><div><h2>{form.title}</h2><div className="muted">Version {formVersion} · fast entry is the priority</div></div><span className="tag live">{isLocked ? "SUBMITTED" : "LIVE FORM"}</span></div>
+      {["auto", "teleop", "endgame", "notes"].map((section) => {
+        const fields = form.fields.filter((field) => field.section === section);
+        if (!fields.length) return null;
+        return <div className="section" key={section}><div className="section-title">{section === "auto" ? "Autonomous" : section === "teleop" ? "Teleop" : section === "endgame" ? "Endgame" : "Scout notes"}</div><div className="form-grid">{fields.map((field) => <div className="field" key={field.id}><label>{field.label}{field.required && <span style={{ color: "#dffb54" }}> *</span>}</label>{field.type === "counter" ? <div className="counter"><button type="button" disabled={isLocked} onClick={() => set(field.id, Math.max(0, Number(payload[field.id] ?? 0) - 1))}>−</button><output>{Number(payload[field.id] ?? 0)}</output><button type="button" disabled={isLocked} onClick={() => set(field.id, Number(payload[field.id] ?? 0) + 1)}>+</button></div> : field.type === "boolean" ? <select disabled={isLocked} value={String(payload[field.id] ?? "")} onChange={(event) => set(field.id, event.target.value === "true")}><option value="">Select…</option><option value="true">Yes</option><option value="false">No</option></select> : field.type === "select" ? <select disabled={isLocked} value={String(payload[field.id] ?? "")} onChange={(event) => set(field.id, event.target.value)}><option value="">Select…</option>{field.options?.map((option) => <option key={option}>{option}</option>)}</select> : field.type === "rating" ? <select disabled={isLocked} value={String(payload[field.id] ?? "")} onChange={(event) => set(field.id, Number(event.target.value))}><option value="">Not rated</option>{[1, 2, 3, 4, 5].map((number) => <option value={number} key={number}>{number} / 5</option>)}</select> : <textarea disabled={isLocked} value={String(payload[field.id] ?? "")} onChange={(event) => set(field.id, event.target.value)} placeholder="Useful observations only…" />}</div>)}</div></div>;
+      })}
+    </div>
+    <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 }}><button className="button secondary" onClick={() => submit("draft")} disabled={saving || isLocked || !submissionId}>Save draft</button><button className="button" onClick={() => submit("submitted")} disabled={saving || isLocked || !submissionId}>{saving ? "Saving…" : isLocked ? "Submitted" : "Submit match"}</button></div>
+    {message && <p className={message.includes("received") || message.includes("saved") ? "trend" : "error"}>{message}</p>}
+  </>;
 }
