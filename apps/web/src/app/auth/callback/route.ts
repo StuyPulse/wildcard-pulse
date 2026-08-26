@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   if (error) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/auth/login";
-    loginUrl.searchParams.set("error", "Google sign-in could not be completed. Please try again.");
+    loginUrl.searchParams.set("error", next === "/auth/reset-password" ? "That password-reset link is invalid or expired. Request a new one." : "Google sign-in could not be completed. Please try again.");
     return NextResponse.redirect(loginUrl);
   }
   const { data: { user } } = await supabase.auth.getUser();
