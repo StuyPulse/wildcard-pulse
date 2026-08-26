@@ -120,6 +120,13 @@
   .assignment-editor select { @apply rounded-md px-2 py-1.5 text-xs; }
   .assignment-editor .button { @apply px-2.5 py-2; }
   .assignment-editor .error, .assignment-editor .trend { @apply col-span-full m-0; }
+  .pit-photo-grid { @apply grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3; }
+  .pit-photo-grid img { @apply h-[180px] w-full rounded-lg border border-stuypulse-border object-cover; }
+  .comparison-row { @apply mb-4 grid gap-1.5; }
+  .comparison-row strong { @apply text-xs text-stuypulse-textMuted; }
+  .comparison-bar { @apply min-h-7 rounded-md px-2 py-1 text-xs font-bold text-white; }
+  .comparison-bar.red { @apply bg-stuypulse-red; }
+  .comparison-bar.blue { @apply bg-sky-600; }
 }
 
 @media (max-width: 900px) {

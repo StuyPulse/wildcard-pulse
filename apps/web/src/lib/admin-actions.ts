@@ -35,6 +35,23 @@ export async function deleteEvent(_: ActionState, formData: FormData): Promise<A
   } catch { return { error: "Admin access is required." }; }
 }
 
+export async function setActiveEvent(_: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    const input = z.object({ eventId: z.string().uuid() }).safeParse({ eventId: formData.get("eventId") });
+    if (!input.success) return { error: "This event could not be identified." };
+    const { organizationId } = await adminContext();
+    const database = createAdminClient();
+    const { data: event } = await database.from("events").select("id,name").eq("id", input.data.eventId).eq("organization_id", organizationId).maybeSingle();
+    if (!event) return { error: "This event is unavailable." };
+    const { error: deactivateError } = await database.from("events").update({ status: "upcoming" }).eq("organization_id", organizationId).eq("status", "active");
+    if (deactivateError) return importDatabaseError("the current active event", deactivateError);
+    const { error: activateError } = await database.from("events").update({ status: "active" }).eq("id", event.id).eq("organization_id", organizationId);
+    if (activateError) return importDatabaseError("the selected event", activateError);
+    revalidatePath("/"); revalidatePath("/dashboard"); revalidatePath("/events"); revalidatePath("/scout/manual");
+    return { success: `${event.name} is now the active event.` };
+  } catch { return { error: "Admin access is required." }; }
+}
+
 export async function generateObjectiveAssignments(_: ActionState, formData: FormData): Promise<ActionState> {
   try {
     const input = z.object({ eventId: z.string().uuid() }).safeParse({ eventId: formData.get("eventId") });
@@ -101,11 +118,10 @@ export async function setObjectiveAssignment(_: ActionState, formData: FormData)
       if (submitted?.length) return { error: "This assignment already has a submission and cannot be reassigned." };
     }
     if (input.data.scoutUserId) {
-      if (existing?.length === 1 && existing[0].scout_user_id === input.data.scoutUserId) return { success: "Scout is already assigned." };
+      if (existing?.some((assignment) => assignment.scout_user_id === input.data.scoutUserId)) return { success: "Scout is already assigned." };
       const { error: insertError } = await database.from("scouting_assignments").insert({ match_id: match.id, team_id: input.data.teamId, scout_user_id: input.data.scoutUserId, assignment_type: "objective" });
       if (insertError) return importDatabaseError("the new assignment", insertError);
-    }
-    if (existing?.length) {
+    } else if (existing?.length) {
       const { error: deleteError } = await database.from("scouting_assignments").delete().in("id", existing.map((assignment) => assignment.id));
       if (deleteError) return importDatabaseError("the previous assignment", deleteError);
     }
@@ -113,7 +129,7 @@ export async function setObjectiveAssignment(_: ActionState, formData: FormData)
     revalidatePath(`/events/${match.event_id}/matches`);
     revalidatePath("/scout/assignments");
     revalidatePath("/dashboard");
-    return { success: input.data.scoutUserId ? "Scout assigned." : "Assignment cleared." };
+    return { success: input.data.scoutUserId ? "Scout added to this team." : "All assignments cleared." };
   } catch {
     return { error: "Admin access and the server secret are required to manage assignments." };
   }
