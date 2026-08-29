@@ -148,11 +148,20 @@
   .form-launch span, .form-kicker { @apply text-[10px] font-medium uppercase tracking-[0.14em] text-stuypulse-redHover; font-family: 'DM Mono', monospace; }
   .form-launch strong { @apply text-base text-stuypulse-text; }
   .form-launch small { @apply text-xs text-stuypulse-textMuted; }
+  .match-scout-grid { @apply grid grid-cols-2 items-start gap-5; }
+  .match-scout-grid .scouting-card { @apply mx-0 w-full; }
   .scouting-card { @apply mx-auto grid max-w-5xl gap-5 rounded-panel border border-stuypulse-border bg-stuypulse-surface p-6 shadow-elevated; }
   .form-intro { @apply border-b border-stuypulse-border pb-5; }
   .form-intro h2 { @apply mt-2 text-2xl; }
   .form-intro p { @apply mb-0 mt-2 max-w-2xl text-sm leading-relaxed text-stuypulse-textMuted; }
   .match-roster { @apply flex gap-5 rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3 py-2 text-xs font-bold; }
+  .manual-team-search { @apply relative; }
+  .manual-team-results { @apply mt-2 max-h-56 overflow-y-auto rounded-lg border border-stuypulse-border bg-stuypulse-bg; }
+  .manual-team-results button { @apply flex min-h-11 w-full items-center justify-between border-b border-stuypulse-border px-3 py-2 text-left text-sm font-bold text-stuypulse-text transition-colors last:border-b-0 hover:bg-stuypulse-elevated; }
+  .manual-team-results button span { @apply ml-3 truncate text-xs font-medium text-stuypulse-textMuted; }
+  .manual-team-results button.selected { @apply bg-stuypulse-red/15 text-stuypulse-text; }
+  .manual-team-results .muted { @apply m-0 px-3 py-3; }
+  .manual-selection { @apply mb-0 mt-2 text-xs text-stuypulse-textMuted; }
   .form-section { @apply rounded-lg border border-stuypulse-border bg-stuypulse-bg/40 p-5; }
   .form-section .section-title { @apply mt-0 text-stuypulse-redHover; }
   .scoring-table { @apply mt-4 overflow-hidden rounded-lg border border-stuypulse-border; }
@@ -178,7 +187,7 @@
   .brand { @apply px-2.5 pb-6; }
   .main { @apply ml-[68px] w-[calc(100%-68px)] px-[22px] py-[22px]; }
   .stats { @apply grid-cols-2; }
-  .dashboard-grid, .page-grid, .assignment-alliance-grid, .form-launcher, .schedule-filters { @apply grid-cols-1; }
+  .dashboard-grid, .page-grid, .assignment-alliance-grid, .form-launcher, .schedule-filters, .match-scout-grid { @apply grid-cols-1; }
   .auth { @apply grid-cols-1; }
   .auth-aside { @apply hidden; }
 }

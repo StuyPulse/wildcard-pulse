@@ -5,12 +5,13 @@ import { createClient } from "@/lib/supabase/client";
 
 type Props = {
   eventId: string;
-  matchId: string;
+  matchId?: string;
   teamId: string;
   assignmentId?: string;
   teamNumber: number;
-  alliance?: "red" | "blue";
-  otherTeams: { id: string; number: number; alliance: "red" | "blue" }[];
+  alliance?: "red" | "blue" | "manual";
+  otherTeams: { id: string; number: number; alliance: "red" | "blue" | "manual" }[];
+  manualMatch?: { stage: string; label?: string };
 };
 type Score = { shoot: number; ferry: number };
 
@@ -18,7 +19,7 @@ const spots = ["Center", "Bump left", "Bump right", "Under trench left", "Under 
 const tags = ["Intake broke", "Shooter broke", "Drive issue", "Electrical", "Other"];
 const empty = (): Score => ({ shoot: 0, ferry: 0 });
 
-export function RebuiltMatchForm({ eventId, matchId, teamId, assignmentId, teamNumber, alliance = "red", otherTeams }: Props) {
+export function RebuiltMatchForm({ eventId, matchId, teamId, assignmentId, teamNumber, alliance = "red", otherTeams, manualMatch }: Props) {
   const [noShow, setNoShow] = useState(false);
   const [spot, setSpot] = useState<string>();
   const [auto, setAuto] = useState(empty);
@@ -36,7 +37,8 @@ export function RebuiltMatchForm({ eventId, matchId, teamId, assignmentId, teamN
   const [submitted, setSubmitted] = useState(false);
   const [entryId] = useState(() => {
     if (typeof window === "undefined") return "";
-    const key = `wildcard-pulse:scouting-entry:${assignmentId ?? `${matchId}:${teamId}`}`;
+    const reportKey = assignmentId ?? (matchId ? `${matchId}:${teamId}` : `manual:${manualMatch?.stage ?? "other"}:${manualMatch?.label ?? ""}:${teamId}`);
+    const key = `wildcard-pulse:scouting-entry:${reportKey}`;
     const existing = window.localStorage.getItem(key);
     const id = existing ?? crypto.randomUUID();
     window.localStorage.setItem(key, id);
@@ -66,10 +68,12 @@ export function RebuiltMatchForm({ eventId, matchId, teamId, assignmentId, teamN
       fouls: noShow ? 0 : fouls, defense: noShow ? false : defense, defense_level: defense ? level : null,
       defended_teams: defense ? defended : [], robot_broke: noShow ? false : broke, break_timestamp: broke ? timestamp : null,
       break_tag: broke ? tag || null : null, comments,
+      report_source: manualMatch ? "manual" : "scheduled",
+      manual_match: manualMatch ? { stage: manualMatch.stage, label: manualMatch.label || null } : null,
     };
     const submittedAt = finalize ? new Date().toISOString() : null;
     const { error } = await supabase.from("scouting_entries").upsert({
-      id: entryId, organization_id: member.organization_id, event_id: eventId, team_id: teamId, match_id: matchId,
+      id: entryId, organization_id: member.organization_id, event_id: eventId, team_id: teamId, match_id: matchId ?? null,
       assignment_id: assignmentId ?? null, scout_user_id: user.id, entry_type: "match", form_version: 2, payload,
       status: finalize ? "submitted" : "draft", submitted_at: submittedAt,
     }, { onConflict: "id" });
@@ -80,7 +84,7 @@ export function RebuiltMatchForm({ eventId, matchId, teamId, assignmentId, teamN
   }
 
   return <section className="scouting-card match-form">
-    <div className="form-intro"><div className="form-kicker">Match scouting · {alliance} alliance</div><h2>Team {teamNumber}</h2><p>Use the large controls while the match runs. Save a draft at any point; submit once the report is complete.</p></div>
+    <div className="form-intro"><div className="form-kicker">{manualMatch ? `Manual match report · ${manualMatch.stage}${manualMatch.label ? ` · ${manualMatch.label}` : ""}` : `Match scouting · ${alliance} alliance`}</div><h2>Team {teamNumber}</h2><p>{manualMatch ? "This exception uses the same match-scouting fields and saves to the same team history as scheduled reports." : "Use the large controls while the match runs. Save a draft at any point; submit once the report is complete."}</p></div>
     <div className="form-section"><div className="section-title">Starting position</div><button type="button" className="button secondary mobile-full" disabled={saving || submitted} aria-pressed={noShow} onClick={() => setNoShow(!noShow)}>{noShow ? "Undo no show" : "Mark no show"}</button><fieldset disabled={disabled}><legend className="sr-only">Starting position</legend><div className={`field-map ${alliance === "blue" ? "flipped" : ""}`}>{spots.map((label) => <button type="button" key={label} aria-pressed={spot === label} className={spot === label ? `spot ${alliance}` : "spot"} onClick={() => setSpot(label)}>{label}</button>)}</div></fieldset></div>
     <fieldset disabled={disabled}><legend className="sr-only">Match scouting details</legend>
       <div className="form-section"><div className="section-title">Scoring</div><p className="muted">Shoot and ferry stay separate. Use ±10 for fast entry, or type an exact count.</p><div className="scoring-table"><div className="scoring-head"><span>Period</span><span>Shoot</span><span>Ferry</span></div><ScoreRow label="Autonomous" value={auto} update={(key, value) => setAuto((score) => ({ ...score, [key]: Math.max(0, value) }))} autoRow />{shifts.map((score, index) => <ScoreRow key={index} label={`Shift ${index + 1}`} value={score} update={(key, value) => change(index, key, value)} />)}</div></div>

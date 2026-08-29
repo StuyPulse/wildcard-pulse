@@ -1,6 +1,53 @@
 "use client";
-import { useMemo, useState } from "react";
+
 import Link from "next/link";
-type Match={id:string;key:string;number:number;type:string;red:string[];blue:string[]};type Team={id:string;number:number;name:string};
-function label(match:Match){const suffix=match.key.split("_").pop()??"";const qual=suffix.match(/^qm(\d+)$/);const finals=suffix.match(/^f(\d+)m(\d+)$/);const semi=suffix.match(/^sf(\d+)m(\d+)$/);if(qual)return `Qualification ${qual[1]}`;if(finals)return `Final ${finals[1]} · Match ${finals[2]}`;if(semi)return `Semifinal ${semi[1]} · Match ${semi[2]}`;return `${match.type} · ${suffix.toUpperCase()}`;}
-export function MatchScoutPicker({matches,teams}:{matches:Match[];teams:Team[]}){const[matchId,setMatchId]=useState(""),[teamId,setTeamId]=useState("");const match=useMemo(()=>matches.find(m=>m.id===matchId),[matches,matchId]);const allowed=match?teams.filter(t=>[...match.red,...match.blue].includes(t.id)).sort((a,b)=>a.number-b.number):[];return <section className="scouting-card"><div className="form-intro"><div className="form-kicker">Match scouting</div><h2>Scout any robot in any scheduled match.</h2><p>Assignments prefill this same report. For manual scouting, choose the scheduled match and team below.</p></div><div className="form-grid"><div className="field"><label>Match</label><select value={matchId} onChange={e=>{setMatchId(e.target.value);setTeamId("")}}><option value="">Choose a match…</option>{matches.map(m=><option key={m.id} value={m.id}>{label(m)}</option>)}</select></div><div className="field"><label>Team</label><select value={teamId} disabled={!match} onChange={e=>setTeamId(e.target.value)}><option value="">Choose a team…</option>{allowed.map(t=><option key={t.id} value={t.id}>{t.number} · {t.name}</option>)}</select></div></div>{match&&<div className="match-roster"><span className="red">Red: {teams.filter(t=>match.red.includes(t.id)).map(t=>t.number).join(" · ")}</span><span className="blue">Blue: {teams.filter(t=>match.blue.includes(t.id)).map(t=>t.number).join(" · ")}</span></div>}<div className="form-actions">{teamId?<Link className="button" href={`/scout/match/${matchId}?team=${teamId}`}>Open match form</Link>:<button className="button" disabled>Choose a match and team</button>}</div></section>}
+import { useMemo, useState } from "react";
+
+type Match = { id: string; key: string; number: number; type: string; red: string[]; blue: string[] };
+type Team = { id: string; number: number; name: string };
+
+function label(match: Match) {
+  const suffix = match.key.split("_").pop() ?? "";
+  const qualification = suffix.match(/^qm(\d+)$/);
+  const final = suffix.match(/^f(\d+)m(\d+)$/);
+  const semifinal = suffix.match(/^sf(\d+)m(\d+)$/);
+  if (qualification) return `Qualification ${qualification[1]}`;
+  if (final) return `Final ${final[1]} · Match ${final[2]}`;
+  if (semifinal) return `Semifinal ${semifinal[1]} · Match ${semifinal[2]}`;
+  return `${match.type} · ${suffix.toUpperCase()}`;
+}
+
+export function MatchScoutPicker({ matches, teams }: { matches: Match[]; teams: Team[] }) {
+  const [matchId, setMatchId] = useState("");
+  const [teamId, setTeamId] = useState("");
+  const match = useMemo(() => matches.find((item) => item.id === matchId), [matches, matchId]);
+  const allowedTeams = match ? teams.filter((team) => [...match.red, ...match.blue].includes(team.id)).sort((a, b) => a.number - b.number) : [];
+
+  return <section className="scouting-card">
+    <div className="form-intro">
+      <div className="form-kicker">Scheduled match</div>
+      <h2>Scout a robot from the imported schedule.</h2>
+      <p>Choose the match first, then choose one of the six robots playing in it. Use the manual report beside this one for exceptions that are not in the schedule.</p>
+    </div>
+    <div className="form-grid">
+      <div className="field">
+        <label htmlFor="scheduled-match">Match</label>
+        <select id="scheduled-match" value={matchId} onChange={(event) => { setMatchId(event.target.value); setTeamId(""); }}>
+          <option value="">Choose a scheduled match…</option>
+          {matches.map((item) => <option key={item.id} value={item.id}>{label(item)}</option>)}
+        </select>
+      </div>
+      <div className="field">
+        <label htmlFor="scheduled-team">Team</label>
+        <select id="scheduled-team" value={teamId} disabled={!match} onChange={(event) => setTeamId(event.target.value)}>
+          <option value="">Choose a robot…</option>
+          {allowedTeams.map((team) => <option key={team.id} value={team.id}>{team.number} · {team.name}</option>)}
+        </select>
+      </div>
+    </div>
+    {match && <div className="match-roster"><span className="red">Red: {teams.filter((team) => match.red.includes(team.id)).map((team) => team.number).join(" · ")}</span><span className="blue">Blue: {teams.filter((team) => match.blue.includes(team.id)).map((team) => team.number).join(" · ")}</span></div>}
+    <div className="form-actions">
+      {teamId ? <Link className="button" href={`/scout/match/${matchId}?team=${teamId}`}>Open scheduled match form</Link> : <button className="button" disabled>Choose a match and robot</button>}
+    </div>
+  </section>;
+}

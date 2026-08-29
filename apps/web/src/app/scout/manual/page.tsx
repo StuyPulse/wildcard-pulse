@@ -1,6 +1,26 @@
+import Link from "next/link";
 import { AppShell, PageHeader } from "@/components/app-shell";
+import { PitPhotoUpload } from "@/components/pit-photo-upload";
 import { getActiveEvent } from "@/lib/active-event";
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
-import { PitPhotoUpload } from "@/components/pit-photo-upload";
-export default async function ManualPage(){const event=await getActiveEvent();const supabase=await createClient();const{data}=event?await supabase.from('event_teams').select('team_id,teams(id,team_number,name)').eq('event_id',event.id):{data:[]};const teams=(data??[]).map((row:any)=>({id:row.team_id,number:row.teams?.team_number,name:row.teams?.name}));return <AppShell active="Manual scouting"><PageHeader eyebrow={event?.name??'No active event'} title="Scouting forms."/>{event?<><section className="form-launcher"><Link href="/scout/match" className="form-launch match"><span>01</span><strong>Match scouting</strong><small>Score one robot in one match</small></Link><Link href="/scout/pre-scout" className="form-launch"><span>02</span><strong>Pre scouting</strong><small>Plan before the event</small></Link><Link href="/scout/pit" className="form-launch"><span>03</span><strong>Pit scouting</strong><small>Robot details and photos</small></Link><Link href="/scout/global" className="form-launch"><span>04</span><strong>Global scouting</strong><small>Shared team notes</small></Link></section><PitPhotoUpload eventId={event.id} teams={teams}/></>:<section className="card"><p className="muted">An admin must set an active event before scouting can begin.</p></section>}</AppShell>}
+
+export default async function ManualPage() {
+  const event = await getActiveEvent();
+  const supabase = await createClient();
+  const { data } = event ? await supabase.from("event_teams").select("team_id,teams(id,team_number,name)").eq("event_id", event.id) : { data: [] };
+  const teams = (data ?? []).map((row: any) => ({ id: row.team_id, number: row.teams?.team_number, name: row.teams?.name }));
+
+  return <AppShell active="Manual scouting">
+    <PageHeader eyebrow={event?.name ?? "No active event"} title="Scouting forms." />
+    {event ? <>
+      <section className="form-launcher">
+        <Link href="/scout/match" className="form-launch match"><span>01</span><strong>Scheduled match scouting</strong><small>Choose an imported match and robot</small></Link>
+        <Link href="/scout/match#manual" className="form-launch"><span>02</span><strong>Manual match report</strong><small>Choose any active-event team and stage</small></Link>
+        <Link href="/scout/pre-scout" className="form-launch"><span>03</span><strong>Pre scouting</strong><small>Plan before the event</small></Link>
+        <Link href="/scout/pit" className="form-launch"><span>04</span><strong>Pit scouting</strong><small>Robot details and photos</small></Link>
+        <Link href="/scout/global" className="form-launch"><span>05</span><strong>Global scouting</strong><small>Shared team notes</small></Link>
+      </section>
+      <PitPhotoUpload eventId={event.id} teams={teams} />
+    </> : <section className="card"><p className="muted">An admin must set an active event before scouting can begin.</p></section>}
+  </AppShell>;
+}
