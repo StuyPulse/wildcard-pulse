@@ -14,11 +14,11 @@ export default async function ManualPage() {
     <PageHeader eyebrow={event?.name ?? "No active event"} title="Scouting forms." />
     {event ? <>
       <section className="form-launcher">
-        <Link href="/scout/match" className="form-launch match"><span>01</span><strong>Scheduled match scouting</strong><small>Choose an imported match and robot</small></Link>
-        <Link href="/scout/match#manual" className="form-launch"><span>02</span><strong>Manual match report</strong><small>Choose any active-event team and stage</small></Link>
-        <Link href="/scout/pre-scout" className="form-launch"><span>03</span><strong>Pre scouting</strong><small>Plan before the event</small></Link>
-        <Link href="/scout/pit" className="form-launch"><span>04</span><strong>Pit scouting</strong><small>Robot details and photos</small></Link>
-        <Link href="/scout/global" className="form-launch"><span>05</span><strong>Global scouting</strong><small>Shared team notes</small></Link>
+        <Link href="/scout/match" className="form-launch"><span>1</span><strong>Scheduled match scouting</strong><small>Choose an imported match and robot</small></Link>
+        <Link href="/scout/match#manual" className="form-launch"><span>2</span><strong>Manual match report</strong><small>Choose any active-event team and stage</small></Link>
+        <Link href="/scout/pre-scout" className="form-launch"><span>3</span><strong>Pre scouting</strong><small>Plan before the event</small></Link>
+        <Link href="/scout/pit" className="form-launch"><span>4</span><strong>Pit scouting</strong><small>Robot details and photos</small></Link>
+        <Link href="/scout/global" className="form-launch"><span>5</span><strong>Global scouting</strong><small>Shared team notes</small></Link>
       </section>
       <PitPhotoUpload eventId={event.id} teams={teams} />
     </> : <section className="card"><p className="muted">An admin must set an active event before scouting can begin.</p></section>}

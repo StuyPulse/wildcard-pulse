@@ -142,23 +142,23 @@
   .comparison-bar { @apply min-h-7 rounded-md px-2 py-1 text-xs font-bold text-white; }
   .comparison-bar.red { @apply bg-stuypulse-red; }
   .comparison-bar.blue { @apply bg-sky-600; }
-  .form-launcher { @apply grid grid-cols-4 gap-3; }
+  .form-launcher { @apply grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3; }
   .form-launch { @apply grid min-h-36 content-between rounded-panel border border-stuypulse-border bg-stuypulse-surface p-5 transition hover:-translate-y-0.5 hover:border-stuypulse-redHover hover:bg-stuypulse-elevated; }
-  .form-launch.match { @apply border-stuypulse-red/70 bg-stuypulse-red/10; }
   .form-launch span, .form-kicker { @apply text-[10px] font-medium uppercase tracking-[0.14em] text-stuypulse-redHover; font-family: 'DM Mono', monospace; }
   .form-launch strong { @apply text-base text-stuypulse-text; }
   .form-launch small { @apply text-xs text-stuypulse-textMuted; }
   .match-scout-grid { @apply grid grid-cols-2 items-start gap-5; }
   .match-scout-grid .scouting-card { @apply mx-0 w-full; }
   .scouting-card { @apply mx-auto grid max-w-5xl gap-5 rounded-panel border border-stuypulse-border bg-stuypulse-surface p-6 shadow-elevated; }
+  .form-grid > *, .scoring-row > * { min-width: 0; }
   .form-intro { @apply border-b border-stuypulse-border pb-5; }
   .form-intro h2 { @apply mt-2 text-2xl; }
   .form-intro p { @apply mb-0 mt-2 max-w-2xl text-sm leading-relaxed text-stuypulse-textMuted; }
   .match-roster { @apply flex gap-5 rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3 py-2 text-xs font-bold; }
   .manual-team-search { @apply relative; }
   .manual-team-results { @apply mt-2 max-h-56 overflow-y-auto rounded-lg border border-stuypulse-border bg-stuypulse-bg; }
-  .manual-team-results button { @apply flex min-h-11 w-full items-center justify-between border-b border-stuypulse-border px-3 py-2 text-left text-sm font-bold text-stuypulse-text transition-colors last:border-b-0 hover:bg-stuypulse-elevated; }
-  .manual-team-results button span { @apply ml-3 truncate text-xs font-medium text-stuypulse-textMuted; }
+  .manual-team-results button { @apply flex min-h-11 w-full min-w-0 items-center justify-between border-b border-stuypulse-border px-3 py-2 text-left text-sm font-bold text-stuypulse-text transition-colors last:border-b-0 hover:bg-stuypulse-elevated; }
+  .manual-team-results button span { @apply ml-3 flex-1 truncate text-right text-xs font-medium text-stuypulse-textMuted; }
   .manual-team-results button.selected { @apply bg-stuypulse-red/15 text-stuypulse-text; }
   .manual-team-results .muted { @apply m-0 px-3 py-3; }
   .manual-selection { @apply mb-0 mt-2 text-xs text-stuypulse-textMuted; }
@@ -218,7 +218,7 @@
   .list-row .button, .row-actions .button { @apply flex-1; }
   .match-row .button { @apply w-full; }
   .match-time, .match-num { @apply w-auto; }
-  .form-launcher { @apply grid-cols-2 gap-3; }
+  .form-launcher { @apply grid-cols-1 gap-3; }
   .form-launch { @apply min-h-32 p-4; }
   .scouting-card { @apply gap-4 rounded-none border-x-0 p-4 shadow-none; }
   .form-intro { @apply pb-4; }
@@ -228,12 +228,12 @@
   .field-map { @apply grid-cols-2 p-2; }
   .spot { @apply min-h-14 text-[11px]; }
   .scoring-head { @apply hidden; }
-  .scoring-row { @apply grid-cols-2 gap-2 px-3 py-3; }
-  .scoring-row strong { @apply col-span-2; }
-  .scoring-row .counter { @apply relative pt-5; }
+  .scoring-row { @apply grid-cols-1 gap-3 px-3 py-3; }
+  .scoring-row strong { @apply col-auto; }
+  .scoring-row .counter { @apply relative w-full justify-between pt-5; }
   .scoring-row .counter::before { @apply absolute left-0 top-0 text-[10px] font-medium uppercase tracking-[0.1em] text-stuypulse-textMuted; font-family: 'DM Mono', monospace; content: attr(data-label); }
-  .form-actions { @apply sticky bottom-[76px] z-20 -mx-4 border-t border-stuypulse-border bg-stuypulse-surface/95 px-4 py-3; backdrop-filter: blur(12px); }
-  .form-actions .button { @apply flex-1 whitespace-nowrap px-2; }
+  .form-actions { @apply static mx-0 flex-col border-0 bg-transparent p-0; backdrop-filter: none; }
+  .form-actions .button { @apply w-full whitespace-normal px-3; }
   .mobile-full { @apply w-full; }
   .row-actions { @apply w-full; }
   .comparison-bar { @apply min-w-[3rem]; }
@@ -244,7 +244,6 @@
 
 @media (max-width: 380px) {
   .sidebar .nav-item { @apply min-w-[60px] text-[8px]; }
-  .form-launcher { @apply grid-cols-1; }
   .form-actions .button { @apply text-xs; }
 }
 
