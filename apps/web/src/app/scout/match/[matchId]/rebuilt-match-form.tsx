@@ -16,11 +16,11 @@ type Props = {
 type Score = { shoot: number; ferry: number };
 
 const spots = [
-  { id: "right-trench", red: "Right Trench", blue: "Left Trench", y: "12%" },
-  { id: "right-bump", red: "Right Bump", blue: "Left Bump", y: "31%" },
-  { id: "hub", red: "Hub", blue: "Hub", y: "50%" },
-  { id: "left-bump", red: "Left Bump", blue: "Right Bump", y: "69%" },
-  { id: "left-trench", red: "Left Trench", blue: "Right Trench", y: "88%" },
+  { id: "right-trench", label: "Right trench", y: "12%" },
+  { id: "right-bump", label: "Right bump", y: "31%" },
+  { id: "hub", label: "Hub", y: "50%" },
+  { id: "left-bump", label: "Left bump", y: "69%" },
+  { id: "left-trench", label: "Left trench", y: "88%" },
 ];
 const tags = ["Intake broke", "Shooter broke", "Drive issue", "Electrical", "Other"];
 const empty = (): Score => ({ shoot: 0, ferry: 0 });
@@ -91,7 +91,7 @@ export function RebuiltMatchForm({ eventId, matchId, teamId, assignmentId, teamN
 
   return <section className="scouting-card match-form">
     <div className="form-intro"><div className="form-kicker">{manualMatch ? `Manual match report · ${manualMatch.stage}${manualMatch.label ? ` · ${manualMatch.label}` : ""}` : `Match scouting · ${alliance} alliance`}</div><h2>Team {teamNumber}</h2><p>{manualMatch ? "This exception uses the same match-scouting fields and saves to the same team history as scheduled reports." : "Use the large controls while the match runs. Save a draft at any point; submit once the report is complete."}</p></div>
-    <div className="form-section"><div className="section-title">Starting position</div><p className="muted">Tap your alliance’s marker on the cached field map. The layout mirrors for blue alliance; tap the selected marker again to clear it.</p><button type="button" className="button secondary mobile-full" disabled={saving || submitted} aria-pressed={noShow} onClick={() => setNoShow(!noShow)}>{noShow ? "Undo no show" : "Mark no show"}</button><fieldset disabled={disabled}><legend className="sr-only">Starting position</legend><div className={`field-map ${alliance === "blue" ? "flipped" : "red-side"}`}><div className="field-map-art" aria-hidden="true"/>{spots.map((item) => <button type="button" key={item.id} aria-pressed={spot === item.id} style={{"--spot-y":item.y} as CSSProperties} className={spot === item.id ? `spot ${alliance}` : "spot"} onClick={() => setSpot((current) => current === item.id ? undefined : item.id)}><span>×</span><small>{alliance === "blue" ? item.blue : item.red}</small></button>)}</div></fieldset><div className="spot-choice" aria-live="polite">{spot ? `Selected: ${alliance === "blue" ? spots.find((item)=>item.id===spot)?.blue : spots.find((item)=>item.id===spot)?.red}` : "No starting position selected."}</div></div>
+    <div className="form-section"><div className="section-title">Starting position</div><p className="muted">Tap a marker to set the robot’s starting location. The field image mirrors for blue alliance; the five named selections stay fixed.</p><button type="button" className="button secondary mobile-full" disabled={saving || submitted} aria-pressed={noShow} onClick={() => setNoShow(!noShow)}>{noShow ? "Undo no show" : "Mark no show"}</button><fieldset disabled={disabled}><legend className="sr-only">Starting position</legend><div className={`field-map ${alliance === "blue" ? "flipped" : "red-side"}`}><div className="field-map-art" aria-hidden="true"/>{spots.map((item) => <button type="button" key={item.id} aria-pressed={spot === item.id} style={{"--spot-y":item.y} as CSSProperties} className={spot === item.id ? `spot ${alliance}` : "spot"} onClick={() => setSpot((current) => current === item.id ? undefined : item.id)}><span>×</span><small>{item.label}</small></button>)}</div></fieldset><div className="spot-choice" aria-live="polite">{spot ? `Selected: ${spots.find((item)=>item.id===spot)?.label}` : "Select a starting position."}</div></div>
     <fieldset disabled={disabled}><legend className="sr-only">Match scouting details</legend>
       <div className="form-section"><div className="section-title">Scoring</div><p className="muted">Shoot and ferry stay separate. Use ±10 for fast entry, or type an exact count.</p><div className="scoring-table"><div className="scoring-head"><span>Period</span><span>Shoot</span><span>Ferry</span></div><ScoreRow label="Autonomous" value={auto} update={(key, value) => setAuto((score) => ({ ...score, [key]: Math.max(0, value) }))} autoRow />{shifts.map((score, index) => <ScoreRow key={index} label={`Shift ${index + 1}`} value={score} update={(key, value) => change(index, key, value)} />)}</div></div>
       <div className="form-section"><div className="section-title">Fouls</div><Counter label="Fouls drawn by this team" value={fouls} by={1} setValue={setFouls} /></div>

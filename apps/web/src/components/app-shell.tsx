@@ -6,8 +6,7 @@ export async function AppShell({ children, active = "Dashboard" }: { children: R
   const activeEvent = viewer?.activeEvent;
   const canManage = viewerCanManage(viewer);
   const eventHref = activeEvent ? `/events/${activeEvent.event_key}` : "/events";
-  const canPick = viewer?.role === "strategist" || viewer?.role === "master" || canManage;
-  return <div className="shell"><Sidebar active={active} canManage={canManage} canPick={canPick} eventHref={eventHref}/><main className="main">{children}</main></div>;
+  return <div className="shell"><Sidebar active={active} canManage={canManage} eventHref={eventHref}/><main className="main">{children}</main></div>;
 }
 
 export async function PageHeader({ eyebrow, title, children }: { eyebrow: string; title: string; children?: React.ReactNode }) {
