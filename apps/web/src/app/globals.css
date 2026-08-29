@@ -92,11 +92,13 @@
   .field-map { @apply relative isolate mt-4 min-h-[440px] overflow-hidden rounded-panel border border-stuypulse-border bg-white; aspect-ratio: 2.04 / 1; }
   .field-map-art { @apply absolute inset-0 bg-cover bg-center; background-image: url('/2026-field-map.png'); }
   .field-map.flipped .field-map-art { transform: scaleX(-1); }
-  .spot { @apply absolute z-10 grid h-[70px] w-[130px] -translate-y-1/2 place-items-center rounded-lg border-2 border-stuypulse-red bg-stuypulse-surface/90 p-1 text-stuypulse-red shadow-panel transition hover:scale-105 hover:bg-stuypulse-red hover:text-white; top:var(--spot-y); left:16%; }
-  .spot span { @apply text-4xl font-light leading-none; }
-  .spot small { @apply whitespace-nowrap text-[10px] font-extrabold tracking-[0.04em]; }
+  .spot { @apply absolute z-10 grid h-[76px] w-[142px] -translate-y-1/2 content-center justify-items-center gap-1 rounded-lg border-2 border-stuypulse-red bg-stuypulse-surface/95 px-3 py-2 text-center text-stuypulse-text shadow-panel transition hover:scale-105 hover:bg-stuypulse-red hover:text-white; grid-template-rows: 2rem auto; top:var(--spot-y); left:9%; }
+  .spot span { @apply text-4xl font-light leading-none text-stuypulse-red; }
+  .spot small { @apply text-[11px] font-extrabold leading-none tracking-[0.03em]; }
   .spot.red { @apply bg-stuypulse-red text-white; }
+  .spot.red span { @apply text-white; }
   .spot.blue { @apply border-sky-500 bg-sky-600 text-white; }
+  .spot.blue span { @apply text-white; }
   .spot-choice { @apply mt-3 text-xs font-semibold text-stuypulse-textMuted; font-family: 'DM Mono', monospace; }
   .team-picker { @apply mt-3 flex flex-wrap gap-2; }
   .team-pick { @apply min-h-11 rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3 py-2 text-sm font-bold; }
@@ -325,7 +327,7 @@
   .form-section { @apply p-4; }
   .match-roster { @apply flex-col gap-1.5; }
   .field-map { @apply min-h-[250px]; }
-  .spot { @apply h-[48px] w-[88px] left-[14%]; }
+  .spot { @apply h-[52px] w-[92px] left-[5%] gap-0.5 px-1 py-1; grid-template-rows: 1.4rem auto; }
   .spot span { @apply text-2xl; }
   .spot small { @apply text-[8px]; }
   .scoring-head { @apply hidden; }
