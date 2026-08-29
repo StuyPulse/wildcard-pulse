@@ -100,6 +100,14 @@
   .auth-form p { @apply mb-7 text-sm leading-relaxed text-stuypulse-textMuted; }
   .auth-form .field { @apply mb-4; }
   .auth-form .button { @apply mt-2 w-full py-3; }
+  .auth-google { @apply gap-3 border-stuypulse-border bg-stuypulse-surface text-stuypulse-text hover:bg-stuypulse-elevated; }
+  .auth-google svg { @apply h-5 w-5; }
+  .auth-divider { @apply my-6 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.12em] text-stuypulse-textMuted; }
+  .auth-divider::before, .auth-divider::after { @apply h-px flex-1 bg-stuypulse-border; content: ""; }
+  .auth-reset { @apply mx-auto mt-3 block border-0 bg-transparent text-sm text-stuypulse-redHover; }
+  .auth-switch { @apply mt-6 text-center; }
+  .auth-switch button { @apply border-0 bg-transparent p-0 font-bold text-stuypulse-text underline decoration-stuypulse-border underline-offset-4 hover:text-stuypulse-redHover; }
+  .auth-legal { @apply mt-5 text-center !text-xs; }
   .auth-page { @apply grid min-h-screen place-items-center bg-stuypulse-bg p-4; }
   .auth-card { @apply w-full max-w-[430px] rounded-panel border border-stuypulse-border bg-stuypulse-surface p-6 shadow-elevated; }
   .auth-feature { @apply absolute bottom-14 left-14 right-14 rounded-panel border border-stuypulse-border bg-stuypulse-elevated/90 p-5 shadow-elevated; }
