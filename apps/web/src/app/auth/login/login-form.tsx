@@ -25,7 +25,7 @@ export function LoginForm() {
   }
 
   return <form className="auth-form">
-    <div className="brand"><BrandLogo/><span>pulse<small>STUYPULSE · 694</small></span></div>
+    <div className="brand"><BrandLogo/><span>wildcard<small>STUYPULSE · 694</small></span></div>
     <h1>{isSignUp ? "Create your account." : "Welcome back."}</h1>
     <p>{isSignUp ? "Use your StuyPulse account to join the competition workspace." : <>Only <strong>@stuypulse.com</strong> accounts can access this competition workspace.</>}</p>
     <button type="button" className="button secondary auth-google" onClick={signInWithGoogle} disabled={pending}><GoogleMark/>Continue with Google</button>
