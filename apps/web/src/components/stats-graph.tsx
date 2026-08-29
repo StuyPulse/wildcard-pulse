@@ -1,0 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import { SCOUT_STAT_LABELS, type ScoutStats, formatStat } from "@/lib/scouting-stats";
+type StatKey = keyof typeof SCOUT_STAT_LABELS;
+const defaults: StatKey[] = ["totalFuel", "autoAvgScored", "teleopAvgScored"];
+export function StatsGraph({ series }: { series: { label: string; color: string; stats: ScoutStats }[] }) { const [keys, setKeys] = useState<StatKey[]>(defaults); const max = Math.max(1, ...series.flatMap((item) => keys.map((key) => item.stats[key]))); function toggle(key: StatKey) { setKeys((current) => current.includes(key) ? current.length === 1 ? current : current.filter((item) => item !== key) : [...current, key].slice(-4)); } return <section className="card section"><div className="card-head"><div><h2>Stats graph</h2><p className="muted">Choose up to four metrics. Bars normalize to the largest selected value.</p></div></div><div className="graph-picker">{(Object.keys(SCOUT_STAT_LABELS) as StatKey[]).map((key) => <label key={key}><input type="checkbox" checked={keys.includes(key)} onChange={() => toggle(key)}/>{SCOUT_STAT_LABELS[key]}</label>)}</div><div className="stats-graph">{keys.map((key) => <div className="graph-row" key={key}><strong>{SCOUT_STAT_LABELS[key]}</strong><div className="graph-bars">{series.map((item) => <div className="graph-bar-wrap" key={item.label}><span className="graph-bar" style={{width: `${item.stats[key] / max * 100}%`, backgroundColor: item.color}}>{formatStat(item.stats[key])}</span><small>{item.label}</small></div>)}</div></div>)}</div></section>; }
