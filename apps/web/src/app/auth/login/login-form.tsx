@@ -36,7 +36,7 @@ export function LoginForm() {
     <div className="field"><label htmlFor="password">Password</label><input id="password" name="password" type="password" autoComplete={isSignUp ? "new-password" : "current-password"} placeholder="••••••••" required minLength={8}/></div>
     {callbackError && <p className="error">{callbackError}</p>}{state.error && <p className="error">{state.error}</p>}{state.message && <p className="trend">{state.message}</p>}
     <button className="button" formAction={isSignUp ? signupAction : loginAction} disabled={pending}>{isSignUp ? pendingSignup ? "Creating account…" : "Create account" : pendingLogin ? "Signing in…" : "Sign in"}</button>
-    {!isSignUp && <button className="link auth-reset" formAction={resetAction} disabled={pending}>{pendingReset ? "Sending reset link…" : "Forgot password?"}</button>}
+    {!isSignUp && <button className="link auth-reset" formAction={resetAction} formNoValidate disabled={pending}>{pendingReset ? "Sending reset link…" : "Forgot password?"}</button>}
     <p className="auth-switch">{isSignUp ? "Already have an account?" : "New to Pulse?"} <button type="button" onClick={() => setMode(isSignUp ? "sign-in" : "sign-up")}>{isSignUp ? "Sign in" : "Create an account"}</button></p>
     <p className="muted auth-legal"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>
   </form>;

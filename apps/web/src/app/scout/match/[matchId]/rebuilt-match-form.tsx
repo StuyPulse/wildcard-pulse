@@ -109,10 +109,14 @@ function ScoreRow({ label, value, update, autoRow }: { label: string; value: Sco
   return <div className={`scoring-row ${autoRow ? "auto-row" : ""}`}><strong>{label}</strong><MiniCounter label="Shoot" value={value.shoot} setValue={(next) => update("shoot", next)} /><MiniCounter label="Ferry" value={value.ferry} setValue={(next) => update("ferry", next)} /></div>;
 }
 
+function WholeNumberInput({ label, value, setValue }: { label: string; value: number; setValue: (value: number) => void }) {
+  return <input aria-label={label} type="text" inputMode="numeric" pattern="[0-9]*" value={value} onChange={(event) => { const next = event.currentTarget.value; if (next === "" || /^\d+$/.test(next)) setValue(next === "" ? 0 : Number(next)); }} />;
+}
+
 function MiniCounter({ label, value, setValue }: { label: string; value: number; setValue: (value: number) => void }) {
-  return <div className="counter" data-label={label}><button type="button" aria-label={`Subtract 10 ${label.toLowerCase()}`} onClick={() => setValue(Math.max(0, value - 10))}>−</button><input aria-label={`${label} count`} type="number" min="0" inputMode="numeric" value={value} onChange={(event) => setValue(Math.max(0, Number(event.target.value)))} /><button type="button" aria-label={`Add 10 ${label.toLowerCase()}`} onClick={() => setValue(value + 10)}>+</button></div>;
+  return <div className="counter" data-label={label}><button type="button" aria-label={`Subtract 10 ${label.toLowerCase()}`} onClick={() => setValue(Math.max(0, value - 10))}>−</button><WholeNumberInput label={`${label} count`} value={value} setValue={setValue}/><button type="button" aria-label={`Add 10 ${label.toLowerCase()}`} onClick={() => setValue(value + 10)}>+</button></div>;
 }
 
 function Counter({ label, value, by, setValue }: { label: string; value: number; by: number; setValue: (value: number) => void }) {
-  return <div className="field"><label>{label}</label><div className="counter"><button type="button" aria-label={`Subtract ${by} foul`} onClick={() => setValue(Math.max(0, value - by))}>−</button><input aria-label={label} type="number" min="0" inputMode="numeric" value={value} onChange={(event) => setValue(Math.max(0, Number(event.target.value)))} /><button type="button" aria-label={`Add ${by} foul`} onClick={() => setValue(value + by)}>+</button></div></div>;
+  return <div className="field"><label>{label}</label><div className="counter"><button type="button" aria-label={`Subtract ${by} foul`} onClick={() => setValue(Math.max(0, value - by))}>−</button><WholeNumberInput label={label} value={value} setValue={setValue}/><button type="button" aria-label={`Add ${by} foul`} onClick={() => setValue(value + by)}>+</button></div></div>;
 }
