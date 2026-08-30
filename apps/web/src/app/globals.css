@@ -75,6 +75,7 @@
   .match-time { @apply w-11 text-[11px] font-medium text-stuypulse-textMuted; font-family: 'DM Mono', monospace; }
   .match-num { @apply w-8 font-bold; }
   .alliances { @apply flex-1 text-xs leading-relaxed; }
+  .match-score { @apply flex min-w-16 items-center justify-center gap-1 rounded-md border border-stuypulse-border bg-stuypulse-bg px-2 py-1 text-sm font-extrabold; font-family: 'DM Mono', monospace; }
   .red { @apply text-stuypulse-redHover; }
   .blue { @apply text-sky-300; }
   .button { @apply inline-flex min-h-11 items-center justify-center rounded-lg bg-stuypulse-red px-4 py-2.5 text-sm font-extrabold text-stuypulse-text shadow-panel transition-colors hover:bg-stuypulse-redHover active:bg-stuypulse-redPressed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stuypulse-redHover focus-visible:ring-offset-2 focus-visible:ring-offset-stuypulse-bg; }

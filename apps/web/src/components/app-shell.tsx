@@ -1,12 +1,13 @@
 import { getViewerContext, viewerCanManage } from "@/lib/viewer-context";
 import { Sidebar } from "./sidebar";
+import { LiveEventSync } from "./live-event-sync";
 
 export async function AppShell({ children, active = "Dashboard" }: { children: React.ReactNode; active?: string }) {
   const viewer = await getViewerContext();
   const activeEvent = viewer?.activeEvent;
   const canManage = viewerCanManage(viewer);
   const eventHref = activeEvent ? `/events/${activeEvent.event_key}` : "/events";
-  return <div className="shell"><Sidebar active={active} canManage={canManage} eventHref={eventHref}/><main className="main">{children}</main></div>;
+  return <div className="shell"><LiveEventSync active={Boolean(activeEvent)}/><Sidebar active={active} canManage={canManage} eventHref={eventHref}/><main className="main">{children}</main></div>;
 }
 
 export async function PageHeader({ eyebrow, title, children }: { eyebrow: string; title: string; children?: React.ReactNode }) {
