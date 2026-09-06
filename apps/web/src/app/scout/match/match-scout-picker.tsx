@@ -22,6 +22,9 @@ export function MatchScoutPicker({ matches, teams, initialMatchId = "" }: { matc
   const [teamId, setTeamId] = useState("");
   const match = useMemo(() => matches.find((item) => item.id === matchId), [matches, matchId]);
   const allowedTeams = match ? teams.filter((team) => [...match.red, ...match.blue].includes(team.id)).sort((a, b) => a.number - b.number) : [];
+  const redTeams = match ? allowedTeams.filter((team) => match.red.includes(team.id)) : [];
+  const blueTeams = match ? allowedTeams.filter((team) => match.blue.includes(team.id)) : [];
+  const robotButton = (team: Team, alliance: "red" | "blue") => <button type="button" key={team.id} aria-pressed={team.id === teamId} className={`robot-pick ${alliance}${team.id === teamId ? " selected" : ""}`} onClick={() => setTeamId(team.id)}>{team.number} · {team.name}</button>;
 
   return <section className="scouting-card">
     <div className="form-intro">
@@ -37,7 +40,7 @@ export function MatchScoutPicker({ matches, teams, initialMatchId = "" }: { matc
           {matches.map((item) => <option key={item.id} value={item.id}>{label(item)}</option>)}
         </select>
       </div>
-      <div className="field"><label>Robot</label>{match ? <div className="robot-picker" aria-label="Choose a robot">{allowedTeams.map((team) => { const alliance = match.red.includes(team.id) ? "red" : "blue"; return <button type="button" key={team.id} aria-pressed={team.id === teamId} className={`robot-pick ${alliance}${team.id === teamId ? " selected" : ""}`} onClick={() => setTeamId(team.id)}>{team.number} · {team.name}</button>; })}</div> : <p className="muted">Choose a scheduled match first.</p>}</div>
+      <div className="field"><label>Robot</label>{match ? <div className="robot-picker" aria-label="Choose a robot"><div className="robot-alliance red"><span className="robot-alliance-label">Red alliance</span>{redTeams.map((team) => robotButton(team, "red"))}</div><div className="robot-alliance blue"><span className="robot-alliance-label">Blue alliance</span>{blueTeams.map((team) => robotButton(team, "blue"))}</div></div> : <p className="muted">Choose a scheduled match first.</p>}</div>
     </div>
     {match && <div className="match-roster"><span className="red">Red: {teams.filter((team) => match.red.includes(team.id)).map((team) => team.number).join(" · ")}</span><span className="blue">Blue: {teams.filter((team) => match.blue.includes(team.id)).map((team) => team.number).join(" · ")}</span></div>}
     <div className="form-actions">

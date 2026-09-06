@@ -109,7 +109,7 @@
   .auto-path-tools > button:not(.button) { @apply h-8 w-8 rounded-full border-2 border-white/40 ring-offset-2 ring-offset-stuypulse-bg; background: var(--pen); }
   .auto-path-tools > button.active { @apply ring-2 ring-stuypulse-text; }
   .auto-path-tools .button { @apply min-h-8 px-3 py-1 text-xs; }
-  .auto-path-canvas { @apply h-auto w-full touch-none rounded-md border border-stuypulse-border bg-white; aspect-ratio: 900 / 480; }
+  .auto-path-canvas { @apply h-auto w-full touch-none rounded-md border border-stuypulse-border bg-white; aspect-ratio: 1380 / 674; background-image: url('/2026-field-map.png'); background-position: center; background-repeat: no-repeat; background-size: cover; }
   .field label { @apply mb-2 block text-xs font-bold text-stuypulse-text; }
   .field input, .field select, .field textarea, .event-picker select, .assignment-editor select { @apply min-h-11 w-full rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3 py-2.5 text-stuypulse-text outline-none transition-colors placeholder:text-stuypulse-textMuted focus:border-stuypulse-redHover focus:ring-1 focus:ring-stuypulse-redHover; }
   .field textarea { @apply min-h-[94px] resize-y; }
@@ -120,7 +120,8 @@
   .field-map { @apply relative isolate mt-4 min-h-[440px] overflow-hidden rounded-panel border border-stuypulse-border bg-white; aspect-ratio: 2.04 / 1; }
   .field-map-art { @apply absolute inset-0 bg-cover bg-center; background-image: url('/2026-field-map.png'); }
   .field-map.flipped .field-map-art { transform: scaleX(-1); }
-  .spot { @apply absolute z-10 grid h-[44px] w-[78px] -translate-y-1/2 content-center justify-items-center gap-0.5 rounded-md border-2 border-stuypulse-red bg-stuypulse-surface/95 px-1 py-1 text-center text-stuypulse-text shadow-panel transition hover:scale-105 hover:bg-stuypulse-red hover:text-white; grid-template-rows: 1rem auto; top:var(--spot-y); left:9%; }
+  .spot { @apply absolute z-10 grid h-[44px] w-[78px] -translate-y-1/2 content-center justify-items-center gap-0.5 rounded-md border-2 border-stuypulse-red bg-stuypulse-surface/95 px-1 py-1 text-center text-stuypulse-text shadow-panel transition hover:scale-105 hover:bg-stuypulse-red hover:text-white; grid-template-rows: 1rem auto; top:var(--spot-y); left:var(--spot-x); }
+  .field-map.flipped .spot { left:calc(100% - var(--spot-x)); }
   .spot span { @apply text-lg font-extrabold leading-none text-stuypulse-red; }
   .spot small { @apply text-[11px] font-extrabold leading-none tracking-[0.03em]; }
   .spot.red { @apply bg-stuypulse-red text-white; }
@@ -135,6 +136,10 @@
   .team-pick.red { @apply border-stuypulse-red bg-stuypulse-red text-white; }
   .team-pick.blue { @apply border-sky-500 bg-sky-600 text-white; }
   .robot-picker { @apply mt-2 grid grid-cols-2 gap-2; }
+  .robot-alliance { @apply grid content-start gap-2; }
+  .robot-alliance-label { @apply px-1 text-[10px] font-extrabold uppercase tracking-[0.1em]; font-family:'DM Mono',monospace; }
+  .robot-alliance.red .robot-alliance-label { @apply text-stuypulse-redHover; }
+  .robot-alliance.blue .robot-alliance-label { @apply text-sky-400; }
   .robot-pick { @apply min-h-12 rounded-lg border-2 px-3 py-2 text-left text-sm font-extrabold transition hover:brightness-110; }
   .robot-pick.red { @apply border-stuypulse-red bg-stuypulse-red/20 text-stuypulse-text; }
   .robot-pick.blue { @apply border-sky-500 bg-sky-600/25 text-stuypulse-text; }
@@ -387,7 +392,7 @@
   .form-section { @apply p-4; }
   .match-roster { @apply flex-col gap-1.5; }
   .field-map { @apply min-h-[248px]; }
-  .spot { @apply h-[32px] w-[64px] left-[4%] gap-0 px-0.5 py-0; grid-template-rows: 0.85rem auto; }
+  .spot { @apply h-[32px] w-[64px] gap-0 px-0.5 py-0; grid-template-rows: 0.85rem auto; }
   .spot span { @apply text-sm; }
   .spot small { @apply text-[7px]; }
   .spot.confirmed { @apply ring-2; }
