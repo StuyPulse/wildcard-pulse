@@ -351,10 +351,13 @@
   .mobile-more .nav-item span { @apply block; }
   .mobile-more .nav-item.active { box-shadow: inset 3px 0 0 theme('colors.stuypulse.red'); }
   .mobile-more .nav-item[style] { @apply mt-2 border-t border-stuypulse-border pt-3; }
-  .main { @apply ml-0 w-full p-4; padding-bottom: max(104px, calc(88px + env(safe-area-inset-bottom))); }
+  .main { @apply ml-0 w-full px-3.5 pt-4; padding-bottom: max(108px, calc(92px + env(safe-area-inset-bottom))); }
   .topbar, .assignment-toolbar, .event-picker, .card-head { @apply flex-col items-stretch gap-3; }
+  .card-head > .link { @apply inline-flex min-h-11 items-center; }
   .topbar { @apply mb-6; }
   .card { @apply p-4; }
+  .card > table { @apply block max-w-full overflow-x-auto; -webkit-overflow-scrolling: touch; }
+  .card > table th, .card > table td { @apply whitespace-nowrap; }
   .stats, .form-grid { @apply grid-cols-1; }
   .event-chip { @apply text-[10px]; }
   h1 { font-size: clamp(1.55rem, 7vw, 2rem); }
@@ -374,10 +377,15 @@
   .form-intro h2 { @apply text-xl; }
   .form-section { @apply p-4; }
   .match-roster { @apply flex-col gap-1.5; }
-  .field-map { @apply min-h-[250px]; }
-  .spot { @apply h-[52px] w-[92px] left-[5%] gap-0.5 px-1 py-1; grid-template-rows: 1.4rem auto; }
-  .spot span { @apply text-2xl; }
-  .spot small { @apply text-[8px]; }
+  .field-map { @apply min-h-[248px]; }
+  .spot { @apply h-[32px] w-[64px] left-[4%] gap-0 px-0.5 py-0; grid-template-rows: 0.85rem auto; }
+  .spot span { @apply text-sm; }
+  .spot small { @apply text-[7px]; }
+  .spot.confirmed { @apply ring-2; }
+  .robot-picker { @apply grid-cols-1; }
+  .robot-pick { @apply min-h-14 px-4; }
+  .team-picker { @apply grid grid-cols-3; }
+  .team-pick { @apply min-w-0 px-2; }
   .scoring-head { @apply hidden; }
   .scoring-row { @apply grid-cols-1 gap-3 px-3 py-3; }
   .scoring-row strong { @apply col-auto; }
@@ -413,6 +421,7 @@
   .summary-mobile-metrics strong { @apply text-sm; font-family:'DM Mono',monospace; }
   .summary-open { @apply mt-3 block text-xs font-bold text-stuypulse-redHover; }
   .summary-table table { @apply min-w-[720px]; }
+  .pre-scout-table { @apply min-w-[1100px]; }
   .compare-picker { @apply grid-cols-1; }
   .compare-picker .button { @apply col-auto; }
   .compare-team-heading { @apply grid-cols-[1fr_auto_1fr] gap-2; }
@@ -426,6 +435,20 @@
   .pick-mobile-order button { @apply min-h-11 rounded-lg border border-stuypulse-border bg-stuypulse-elevated px-3 text-xs font-bold text-stuypulse-text disabled:opacity-30; }
   .category-order-buttons button { @apply h-8 w-8 text-sm; }
   .pick-row .pick-note { @apply col-auto; }
+  .photo-coverage { @apply grid-cols-1; }
+  .global-document-editor { @apply grid-cols-1; }
+  .global-document-editor .button { @apply w-full; }
+  .global-document-frame { @apply h-[58dvh]; }
+  .practice-match-form { @apply grid-cols-1; }
+  .practice-match-form .button { @apply w-full; }
+  .submission-detail-grid { @apply grid-cols-1; }
+  .submission-meta { @apply gap-x-3 gap-y-1.5 text-[9px]; }
+  .auto-path-drawer { @apply -mx-1 p-2; }
+  .auto-path-tools { @apply gap-3; }
+  .auto-path-tools > button:not(.button) { @apply h-9 w-9; }
+  .event-selector-links a, .filter-tabs a { @apply flex min-h-11 flex-1 items-center justify-center text-center; }
+  .category-create { @apply grid grid-cols-[minmax(0,1fr)_44px] gap-2; }
+  .category-create .button { @apply col-span-2 w-full; }
   .auth-panel { @apply p-4; }
   .auth-form { @apply max-w-none; }
   .auth-card { @apply p-5; }
@@ -434,6 +457,10 @@
 @media (max-width: 380px) {
   .sidebar .nav-item { @apply min-w-[60px] text-[8px]; }
   .form-actions .button { @apply text-xs; }
+  .main { @apply px-3; }
+  .sidebar .mobile-nav .nav-item { @apply text-[8px]; }
+  .event-chip { @apply px-2 text-[9px]; }
+  .team-stat-grid { @apply grid-cols-1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
