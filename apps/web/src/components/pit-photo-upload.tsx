@@ -1,4 +1,33 @@
 "use client";
+
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-export function PitPhotoUpload({eventId,teams}:{eventId:string;teams:{id:string;number:number;name:string}[]}){const[teamId,setTeamId]=useState(""),[message,setMessage]=useState(""),[busy,setBusy]=useState(false);const sorted=[...teams].sort((a,b)=>a.number-b.number);async function upload(files:FileList|null){if(!files?.length||!teamId)return setMessage("Choose a team first.");setBusy(true);const supabase:any=createClient();const{data:{user}}=await supabase.auth.getUser();const{data:membership}=await supabase.from("organization_members").select("organization_id").eq("user_id",user?.id).limit(1).maybeSingle();if(!user||!membership){setMessage("Sign in again before uploading.");setBusy(false);return;}const results=await Promise.all(Array.from(files).map(async file=>{const path=`${user.id}/${eventId}/${teamId}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,"-")}`;const{error}=await supabase.storage.from("pit-photos").upload(path,file);return error?{error}:supabase.from("pit_photos").insert({organization_id:membership.organization_id,event_id:eventId,team_id:teamId,storage_path:path,uploaded_by:user.id});}));setMessage(results.every(r=>!r.error)?`${results.length} pit photo${results.length===1?"":"s"} uploaded and shown on the team page.`:"One or more photos could not upload.");setBusy(false)}return <section className="card section"><h2>Update pit photos</h2><p className="muted">Photos stay private to Wildcard Pulse members and appear on the matching team page.</p><div className="form-grid"><div className="field"><label>Team</label><select value={teamId} onChange={e=>setTeamId(e.target.value)}><option value="">Choose a team…</option>{sorted.map(t=><option key={t.id} value={t.id}>{t.number} · {t.name}</option>)}</select></div><div className="field"><label>Photos</label><input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple disabled={busy} onChange={e=>upload(e.target.files)}/></div></div>{message&&<p aria-live="polite" className={message.startsWith("One")?"error":"trend"}>{message}</p>}</section>}
+
+type Team = { id: string; number: number; name: string };
+
+export function PitPhotoUpload({ eventId, teams }: { eventId: string; teams: Team[] }) {
+  const [teamId, setTeamId] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const sorted = [...teams].sort((a, b) => a.number - b.number);
+
+  async function upload(files: FileList | null) {
+    if (!files?.length || !teamId) return setMessage("Choose a team first.");
+    setBusy(true);
+    const supabase: any = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: membership } = await supabase.from("organization_members").select("organization_id").eq("user_id", user?.id).limit(1).maybeSingle();
+    if (!user || !membership) { setMessage("Sign in again before uploading."); setBusy(false); return; }
+    const results = await Promise.all(Array.from(files).map(async (file) => {
+      const path = `${user.id}/${eventId}/${teamId}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "-")}`;
+      const { error } = await supabase.storage.from("pit-photos").upload(path, file);
+      return error ? { error } : supabase.from("pit_photos").insert({ organization_id: membership.organization_id, event_id: eventId, team_id: teamId, storage_path: path, uploaded_by: user.id });
+    }));
+    setMessage(results.every((result) => !result.error) ? `${results.length} pit photo${results.length === 1 ? "" : "s"} uploaded and shown on the team page.` : "One or more photos could not upload.");
+    setBusy(false);
+  }
+
+  function choose(files: FileList | null, input: HTMLInputElement) { void upload(files); input.value = ""; }
+
+  return <section className="card section"><h2>Update pit photos</h2><p className="muted">Photos stay private to Wildcard Pulse members and appear on the matching team page.</p><div className="form-grid"><div className="field"><label htmlFor="pit-photo-team">Team</label><select id="pit-photo-team" value={teamId} onChange={(event) => setTeamId(event.target.value)}><option value="">Choose a team…</option>{sorted.map((team) => <option key={team.id} value={team.id}>{team.number} · {team.name}</option>)}</select></div><div className="field"><label>Photos</label><div className="photo-input-actions"><label className="button secondary" htmlFor="pit-photo-library">Choose from phone</label><input id="pit-photo-library" type="file" accept="image/*" multiple disabled={busy} onChange={(event) => choose(event.target.files, event.currentTarget)}/><label className="button secondary" htmlFor="pit-photo-camera">Take photo</label><input id="pit-photo-camera" type="file" accept="image/*" capture="environment" disabled={busy} onChange={(event) => choose(event.target.files, event.currentTarget)}/></div></div></div>{message && <p aria-live="polite" className={message.startsWith("One") ? "error" : "trend"}>{message}</p>}</section>;
+}

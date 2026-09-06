@@ -92,8 +92,8 @@
   .submission-row-action { @apply flex shrink-0 items-center gap-3 text-sm font-bold text-stuypulse-textMuted; }
   .submission-detail { @apply max-w-5xl; }
   .submission-meta { @apply mb-5 flex flex-wrap gap-x-5 gap-y-2 border-y border-stuypulse-border py-3 text-[10px] font-medium uppercase tracking-[0.1em] text-stuypulse-textMuted; font-family: 'DM Mono', monospace; }
-  .submission-detail-grid { @apply grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3; }
-  .submission-detail-grid > div { @apply min-w-0 rounded-lg border border-stuypulse-border bg-stuypulse-bg p-3; }
+  .submission-detail-grid { @apply grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] items-start gap-3; }
+  .submission-detail-grid > div { @apply h-fit min-w-0 self-start rounded-lg border border-stuypulse-border bg-stuypulse-bg p-3; }
   .submission-detail-grid dt { @apply mb-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-stuypulse-textMuted; font-family: 'DM Mono', monospace; }
   .submission-detail-grid dd { @apply m-0 break-words text-sm font-semibold text-stuypulse-text; }
   .submission-detail-grid-compact { @apply grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2; }
@@ -102,8 +102,12 @@
   .submission-detail-grid-compact dd { @apply text-xs; }
   .submission-array { @apply grid gap-2; }
   .submission-array-item { @apply rounded-md border border-stuypulse-border bg-stuypulse-surface p-2; }
+  .submission-detail-grid > .submission-drawing { @apply col-span-full; }
   .auto-path-preview { @apply relative aspect-[1380/674] overflow-hidden rounded-md border border-stuypulse-border bg-white; background-image: url('/2026-field-map.png'); background-position: center; background-size: cover; }
   .auto-path-preview img { @apply absolute inset-0 h-full w-full; }
+  .photo-input-actions { @apply flex flex-wrap gap-2; }
+  .photo-input-actions input { @apply sr-only; }
+  .photo-input-actions label { @apply mb-0; }
   .muted { @apply text-xs text-stuypulse-textMuted; }
   .section { @apply mt-[18px]; }
   .section-title { @apply mb-2.5 mt-[22px] text-[11px] font-medium uppercase tracking-[0.12em] text-stuypulse-textMuted; font-family: 'DM Mono', monospace; }
@@ -127,6 +131,7 @@
   .field-map.flipped .field-map-art { transform: scaleX(-1); }
   .spot { @apply absolute z-10 grid h-12 w-[96px] -translate-y-1/2 content-center justify-items-center rounded-md border-2 border-stuypulse-red bg-stuypulse-surface px-1 py-1 text-center text-stuypulse-text shadow-panel transition hover:scale-105 hover:bg-stuypulse-red hover:text-white; top:var(--spot-y); left:var(--spot-x); }
   .field-map.flipped .spot { left:calc(100% - var(--spot-x)); }
+  .mobile-start-spots { display: none; }
   .spot span { @apply max-w-full text-[12px] font-extrabold leading-tight text-stuypulse-text; text-shadow: 0 1px 2px rgb(0 0 0 / 0.45); }
   .spot.red { @apply bg-stuypulse-red text-white; }
   .spot.red span { @apply text-white; }
@@ -396,10 +401,17 @@
   .form-intro h2 { @apply text-xl; }
   .form-section { @apply p-4; }
   .match-roster { @apply flex-col gap-1.5; }
-  .field-map { @apply min-h-[248px]; }
+  .field-map { @apply min-h-0; }
   .spot { @apply h-10 w-[82px] px-0.5 py-0; }
   .spot span { @apply text-[9px]; }
   .spot.confirmed { @apply ring-2; }
+  .field-map .spot { @apply hidden; }
+  .mobile-start-spots { @apply mt-3 grid grid-cols-2 gap-2; }
+  .spot-mobile { @apply min-h-12 rounded-lg border-2 border-stuypulse-red bg-stuypulse-surface px-3 text-left text-sm font-extrabold text-stuypulse-text; }
+  .spot-mobile.red { @apply bg-stuypulse-red text-white; }
+  .spot-mobile.blue { @apply border-sky-500 bg-sky-600 text-white; }
+  .spot-mobile.confirmed { @apply border-stuypulse-redPressed bg-stuypulse-redPressed ring-2 ring-stuypulse-red/40; }
+  .spot-mobile.blue.confirmed { @apply border-sky-900 bg-sky-800 ring-sky-500/40; }
   .robot-picker { @apply grid-cols-1; }
   .robot-pick { @apply min-h-14 px-4; }
   .team-picker { @apply grid grid-cols-3; }
@@ -464,6 +476,7 @@
   .practice-match-form { @apply grid-cols-1; }
   .practice-match-form .button { @apply w-full; }
   .submission-detail-grid { @apply grid-cols-1; }
+  .auto-path-preview { @apply aspect-[1380/674]; }
   .submission-meta { @apply gap-x-3 gap-y-1.5 text-[9px]; }
   .auto-path-drawer { @apply -mx-1 p-2; }
   .auto-path-tools { @apply gap-3; }
