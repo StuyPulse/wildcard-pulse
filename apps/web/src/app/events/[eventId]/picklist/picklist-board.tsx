@@ -19,6 +19,7 @@ export function PicklistBoard({ organizationId, eventId, userId, canEdit, catego
   const [newTierColor, setNewTierColor] = useState("#64748b");
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"board" | "history">("board");
   const orderedCategories = useMemo(() => [...categories].sort((left, right) => left.sort_order - right.sort_order || left.name.localeCompare(right.name)), [categories]);
   const byTeam = useMemo(() => new Map(rankings.map((ranking) => [ranking.team_id, ranking])), [rankings]);
   const fallbackTier = orderedCategories[0]?.id ?? null;
@@ -96,14 +97,70 @@ export function PicklistBoard({ organizationId, eventId, userId, canEdit, catego
   const finishDrag = () => { setDraggingId(null); setDropTargetId(null); };
   const dropOn = (event: DragEvent<HTMLElement>, categoryId: string, beforeTeamId?: string) => { event.preventDefault(); const teamId = event.dataTransfer.getData("text/plain") || draggingId; if (teamId) void moveToTier(teamId, categoryId, beforeTeamId); finishDrag(); };
 
-  return <><section className="picklist-toolbar">{canEdit ? <form className="picklist-tier-form" onSubmit={addTier}><label className="sr-only" htmlFor="new-picklist-tier">New tier name</label><input id="new-picklist-tier" value={newTierName} onChange={(event) => setNewTierName(event.target.value)} maxLength={48} placeholder="New tier" /><label className="sr-only" htmlFor="new-picklist-tier-color">Tier color</label><input id="new-picklist-tier-color" type="color" value={newTierColor} onChange={(event) => setNewTierColor(event.target.value)} /><button type="submit" className="button secondary" disabled={!newTierName.trim()}><Plus size={16} aria-hidden="true"/> Add tier</button></form> : <span className="tag pending">View only</span>}</section><section className="picklist-tier-board" aria-label="Shared picklist tiers">{orderedCategories.map((category, categoryIndex) => { const tierTeams = teamsInTier(category.id); return <section className="card picklist-tier" style={{ "--tier": category.color } as CSSProperties} key={category.id} onDragOver={(event) => { if (canEdit) event.preventDefault(); }} onDrop={(event) => dropOn(event, category.id)}><div className="picklist-tier-head"><div><span className="picklist-tier-label">{category.name}</span><p className="muted">{tierTeams.length} teams</p></div>{canEdit && <div className="picklist-tier-actions"><button type="button" disabled={categoryIndex === 0} aria-label={`Move ${category.name} tier up`} onClick={() => moveTier(category.id, -1)}><ArrowUp size={15}/></button><button type="button" disabled={categoryIndex === orderedCategories.length - 1} aria-label={`Move ${category.name} tier down`} onClick={() => moveTier(category.id, 1)}><ArrowDown size={15}/></button><button type="button" disabled={orderedCategories.length <= 1} aria-label={`Remove ${category.name} tier`} onClick={() => void removeTier(category.id)}><Trash2 size={15}/></button></div>}</div><div className="picklist-tier-list">{tierTeams.map((team, index) => <TierTeamRow key={team.id} team={team} ranking={byTeam.get(team.id)} categories={orderedCategories} tierIndex={index} tierSize={tierTeams.length} canEdit={canEdit} saving={savingIds.includes(team.id)} dragging={draggingId === team.id} dropTarget={dropTargetId === team.id} onDragStart={(event) => startDrag(event, team.id)} onDragEnd={finishDrag} onDragOver={(event) => { if (canEdit) { event.preventDefault(); setDropTargetId(team.id); } }} onDrop={(event) => dropOn(event, category.id, team.id)} onTierChange={(categoryId) => void moveToTier(team.id, categoryId)} onMove={(direction) => void moveWithinTier(team.id, category.id, direction)} onNote={(note) => void persistTeams([{ team, changes: { note } }], `Note saved for Team ${team.team_number}.`)} onSelected={(selected) => void persistTeams([{ team, changes: { selected } }], selected ? `Team ${team.team_number} selected.` : `Team ${team.team_number} unselected.`)}/>)}</div>{!tierTeams.length && <p className="muted picklist-empty-tier">Drop a team here.</p>}</section>; })}</section>{notice && <p className="trend" aria-live="polite">{notice}</p>}<section className="card section"><div className="card-head"><div><h2>Picklist activity</h2></div><span className="muted">{changes.length} recent changes</span></div><div className="picklist-activity">{changes.length ? changes.map((change) => <ChangeRow key={change.id} change={change} categories={orderedCategories}/>) : <p className="muted">No shared edits have been recorded yet.</p>}</div></section></>;
+  return <>
+    <section className="card picklist-workspace">
+      <div className="picklist-workspace-head">
+        <div className="picklist-tabs" role="tablist" aria-label="Picklist sections">
+          <button type="button" role="tab" aria-selected={activeTab === "board"} className={activeTab === "board" ? "active" : ""} onClick={() => setActiveTab("board")}>Board</button>
+          <button type="button" role="tab" aria-selected={activeTab === "history"} className={activeTab === "history" ? "active" : ""} onClick={() => setActiveTab("history")}>History <span>{changes.length}</span></button>
+        </div>
+        {!canEdit && <span className="tag pending">View only</span>}
+      </div>
+      {activeTab === "board" && <div className="picklist-tier-manager" aria-label="Tier management">
+        <span className="picklist-manager-label">Tiers</span>
+        <div className="picklist-tier-controls">
+          {orderedCategories.map((category, categoryIndex) => <div className="picklist-tier-control" style={{ "--tier": category.color } as CSSProperties} key={category.id}>
+            <span>{category.name}</span>
+            {canEdit && <div className="picklist-tier-actions">
+              <button type="button" disabled={categoryIndex === 0} aria-label={`Move ${category.name} tier up`} onClick={() => void moveTier(category.id, -1)}><ArrowUp size={14}/></button>
+              <button type="button" disabled={categoryIndex === orderedCategories.length - 1} aria-label={`Move ${category.name} tier down`} onClick={() => void moveTier(category.id, 1)}><ArrowDown size={14}/></button>
+              <button type="button" disabled={orderedCategories.length <= 1} aria-label={`Remove ${category.name} tier`} onClick={() => void removeTier(category.id)}><Trash2 size={14}/></button>
+            </div>}
+          </div>)}
+          {canEdit && <form className="picklist-tier-form" onSubmit={addTier}>
+            <label className="sr-only" htmlFor="new-picklist-tier">New tier name</label>
+            <input id="new-picklist-tier" value={newTierName} onChange={(event) => setNewTierName(event.target.value)} maxLength={48} placeholder="New tier" />
+            <label className="sr-only" htmlFor="new-picklist-tier-color">Tier color</label>
+            <input id="new-picklist-tier-color" type="color" value={newTierColor} onChange={(event) => setNewTierColor(event.target.value)} />
+            <button type="submit" className="button secondary" disabled={!newTierName.trim()}><Plus size={16} aria-hidden="true"/> Add</button>
+          </form>}
+        </div>
+      </div>}
+    </section>
+
+    {activeTab === "board" ? <section className="picklist-tier-board" aria-label="Shared picklist tiers">
+      {orderedCategories.map((category) => {
+        const tierTeams = teamsInTier(category.id);
+        return <section className="card picklist-tier" style={{ "--tier": category.color } as CSSProperties} key={category.id} onDragOver={(event) => { if (canEdit) event.preventDefault(); }} onDrop={(event) => dropOn(event, category.id)}>
+          <div className="picklist-tier-head"><div><span className="picklist-tier-label">{category.name}</span><p className="muted">{tierTeams.length} teams</p></div></div>
+          <div className="picklist-tier-list">{tierTeams.map((team, index) => <TierTeamRow key={team.id} team={team} ranking={byTeam.get(team.id)} categories={orderedCategories} tierIndex={index} tierSize={tierTeams.length} canEdit={canEdit} saving={savingIds.includes(team.id)} dragging={draggingId === team.id} dropTarget={dropTargetId === team.id} onDragStart={(event) => startDrag(event, team.id)} onDragEnd={finishDrag} onDragOver={(event) => { if (canEdit) { event.preventDefault(); setDropTargetId(team.id); } }} onDrop={(event) => dropOn(event, category.id, team.id)} onTierChange={(categoryId) => void moveToTier(team.id, categoryId)} onMove={(direction) => void moveWithinTier(team.id, category.id, direction)} onNote={(note) => void persistTeams([{ team, changes: { note } }], `Note saved for Team ${team.team_number}.`)} onSelected={(selected) => void persistTeams([{ team, changes: { selected } }], selected ? `Team ${team.team_number} selected.` : `Team ${team.team_number} unselected.`)}/>)}</div>
+          {!tierTeams.length && <p className="muted picklist-empty-tier">Drop a team here.</p>}
+        </section>;
+      })}
+    </section> : <section className="card section picklist-history" role="tabpanel">
+      <div className="card-head"><h2>History</h2><span className="muted">{changes.length} recent changes</span></div>
+      <div className="picklist-activity">{changes.length ? changes.map((change) => <ChangeRow key={change.id} change={change} categories={orderedCategories}/>) : <p className="muted">No shared edits have been recorded yet.</p>}</div>
+    </section>}
+    {notice && <p className="trend" aria-live="polite">{notice}</p>}
+  </>;
 }
 
 function TierTeamRow({ team, ranking, categories, tierIndex, tierSize, canEdit, saving, dragging, dropTarget, onDragStart, onDragEnd, onDragOver, onDrop, onTierChange, onMove, onNote, onSelected }: { team: Team; ranking?: Ranking; categories: Category[]; tierIndex: number; tierSize: number; canEdit: boolean; saving: boolean; dragging: boolean; dropTarget: boolean; onDragStart: (event: DragEvent<HTMLElement>) => void; onDragEnd: () => void; onDragOver: (event: DragEvent<HTMLElement>) => void; onDrop: (event: DragEvent<HTMLElement>) => void; onTierChange: (categoryId: string) => void; onMove: (direction: -1 | 1) => void; onNote: (note: string) => void; onSelected: (selected: boolean) => void }) {
   const [note, setNote] = useState(ranking?.note ?? "");
   const currentTier = ranking?.category_id ?? categories[0]?.id ?? "";
   const selected = ranking?.selected ?? false;
-  return <article draggable={canEdit} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragOver={onDragOver} onDrop={onDrop} className={`picklist-team-row${dragging ? " dragging" : ""}${dropTarget ? " drop-target" : ""}`}><div className="picklist-team-name">{canEdit && <GripVertical className="picklist-drag-handle" size={18} aria-hidden="true"/>}<span className="picklist-team-position">{tierIndex + 1}</span><span><strong>{team.team_number}</strong><small>{team.name}</small></span></div>{canEdit ? <><label className={selected ? "picklist-selected is-selected" : "picklist-selected"}><input type="checkbox" checked={selected} disabled={saving} onChange={(event) => onSelected(event.target.checked)} /><Check size={14} aria-hidden="true"/><span>Selected</span></label><label className="picklist-tier-select"><span className="sr-only">Tier</span><select value={currentTier} disabled={saving} onChange={(event) => onTierChange(event.target.value)}>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label><div className="picklist-order-buttons"><button type="button" disabled={saving || tierIndex === 0} aria-label={`Move Team ${team.team_number} up`} onClick={() => onMove(-1)}><ArrowUp size={16}/></button><button type="button" disabled={saving || tierIndex === tierSize - 1} aria-label={`Move Team ${team.team_number} down`} onClick={() => onMove(1)}><ArrowDown size={16}/></button></div><label className="picklist-note"><span className="sr-only">Notes for Team {team.team_number}</span><textarea value={note} maxLength={2000} disabled={saving} placeholder="Notes" onChange={(event) => setNote(event.target.value)} onBlur={() => { if (note.trim() !== (ranking?.note ?? "")) onNote(note.trim()); }}/></label><span className="picklist-save-state" aria-live="polite">{saving ? "Saving…" : "Saved"}</span></> : <><span className={selected ? "picklist-selected is-selected" : "picklist-selected"}>{selected && <Check size={14} aria-hidden="true"/>}<span>Selected</span></span><span className="picklist-read-tier">{categories.find((category) => category.id === currentTier)?.name ?? "Unassigned"}</span><p className="picklist-read-note">{ranking?.note || "—"}</p></>}</article>;
+  const teamIdentity = <div className="picklist-team-name">{canEdit && <GripVertical className="picklist-drag-handle" size={18} aria-hidden="true"/>}<span className="picklist-team-position">{tierIndex + 1}</span><span><strong>{team.team_number}</strong><small>{team.name}</small></span></div>;
+  const noteControl = canEdit ? <label className="picklist-note"><span className="sr-only">Notes for Team {team.team_number}</span><textarea value={note} maxLength={2000} disabled={saving} placeholder="Notes" onChange={(event) => setNote(event.target.value)} onBlur={() => { if (note.trim() !== (ranking?.note ?? "")) onNote(note.trim()); }}/></label> : <p className="picklist-read-note">{ranking?.note || "—"}</p>;
+  return <article draggable={canEdit} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragOver={onDragOver} onDrop={onDrop} className={`picklist-team-row${dragging ? " dragging" : ""}${dropTarget ? " drop-target" : ""}`}>
+    {teamIdentity}
+    {noteControl}
+    {canEdit ? <>
+      <label className={selected ? "picklist-selected is-selected" : "picklist-selected"}><input type="checkbox" checked={selected} disabled={saving} onChange={(event) => onSelected(event.target.checked)} /><Check size={14} aria-hidden="true"/><span>Selected</span></label>
+      <label className="picklist-tier-select"><span className="sr-only">Tier</span><select value={currentTier} disabled={saving} onChange={(event) => onTierChange(event.target.value)}>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
+      <div className="picklist-order-buttons"><button type="button" disabled={saving || tierIndex === 0} aria-label={`Move Team ${team.team_number} up`} onClick={() => onMove(-1)}><ArrowUp size={16}/></button><button type="button" disabled={saving || tierIndex === tierSize - 1} aria-label={`Move Team ${team.team_number} down`} onClick={() => onMove(1)}><ArrowDown size={16}/></button></div>
+      <span className="picklist-save-state" aria-live="polite">{saving ? "Saving…" : "Saved"}</span>
+    </> : <><span className={selected ? "picklist-selected is-selected" : "picklist-selected"}>{selected && <Check size={14} aria-hidden="true"/>}<span>Selected</span></span><span className="picklist-read-tier">{categories.find((category) => category.id === currentTier)?.name ?? "Unassigned"}</span></>}
+  </article>;
 }
 
 function ChangeRow({ change, categories }: { change: Change; categories: Category[] }) {
