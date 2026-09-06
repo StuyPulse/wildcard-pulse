@@ -254,6 +254,17 @@
   .practice-setup summary { @apply cursor-pointer text-sm font-bold; }
   .practice-match-form { @apply mt-3 grid grid-cols-[120px_minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-3; }
   .schedule-filters select { @apply w-full rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3 py-2 text-sm text-stuypulse-text; }
+  .searchable-team-select { @apply relative min-w-0; }
+  .searchable-team-input { @apply flex min-h-11 overflow-hidden rounded-lg border border-stuypulse-border bg-stuypulse-bg; }
+  .searchable-team-input input { @apply min-w-0 flex-1 bg-transparent px-3 text-sm text-stuypulse-text outline-none placeholder:text-stuypulse-textMuted; }
+  .searchable-team-input:focus-within { @apply border-stuypulse-red ring-2 ring-stuypulse-red/20; }
+  .searchable-team-input button { @apply w-10 border-l border-stuypulse-border text-lg text-stuypulse-textMuted hover:bg-stuypulse-elevated disabled:opacity-50; }
+  .searchable-team-results { @apply absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-stuypulse-border bg-stuypulse-surface p-1 shadow-elevated; }
+  .searchable-team-results button { @apply flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-left text-sm text-stuypulse-text hover:bg-stuypulse-elevated; }
+  .searchable-team-results button strong { @apply font-extrabold; }
+  .searchable-team-results button span { @apply min-w-0 flex-1 truncate text-xs text-stuypulse-textMuted; }
+  .searchable-team-results button.selected { @apply bg-stuypulse-red/15 text-stuypulse-text; }
+  .searchable-team-results .muted { @apply m-0 px-3 py-2 text-xs; }
   .filter-tabs, .event-selector-links { @apply flex flex-wrap gap-2; }
   .filter-tabs a, .event-selector-links a { @apply rounded-lg border border-stuypulse-border px-3 py-2 text-xs font-bold text-stuypulse-textMuted hover:bg-stuypulse-elevated hover:text-stuypulse-text; }
   .filter-tabs a.active, .event-selector-links a.active { @apply border-stuypulse-red bg-stuypulse-red/15 text-stuypulse-text; }
@@ -311,6 +322,14 @@
   .summary-tabs { @apply mb-5 flex flex-wrap gap-2 border-b border-stuypulse-border pb-4; }
   .summary-tabs button { @apply min-h-10 rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3.5 text-xs font-extrabold text-stuypulse-textMuted transition hover:bg-stuypulse-elevated hover:text-stuypulse-text; }
   .summary-tabs button.active { @apply border-stuypulse-red bg-stuypulse-red text-white; }
+  .summary-controls { @apply mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-stuypulse-border bg-stuypulse-bg/50 p-3; }
+  .summary-controls label { @apply grid min-w-[220px] flex-1 gap-1 text-[10px] font-bold uppercase tracking-[0.08em] text-stuypulse-textMuted; font-family:'DM Mono',monospace; }
+  .summary-controls input { @apply min-h-11 rounded-lg border border-stuypulse-border bg-stuypulse-surface px-3 text-sm normal-case tracking-normal text-stuypulse-text outline-none placeholder:text-stuypulse-textMuted; font-family:Manrope,sans-serif; }
+  .summary-sort-state { @apply grid gap-0.5 rounded-lg border border-stuypulse-border bg-stuypulse-surface px-3 py-2 text-xs; }
+  .summary-sort-state span { @apply text-[9px] font-bold uppercase tracking-[0.08em] text-stuypulse-textMuted; font-family:'DM Mono',monospace; }
+  .summary-sort-state strong { @apply text-stuypulse-text; }
+  .summary-sort-active { @apply text-stuypulse-redHover underline decoration-2 underline-offset-4; }
+  .summary-empty { @apply mt-4; }
   .summary-table table { @apply min-w-[900px]; }
   .pre-scout-table { @apply min-w-[1300px]; }
   .pre-scout-table td { @apply max-w-[260px] align-top text-xs leading-relaxed; }
