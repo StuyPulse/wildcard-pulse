@@ -15,9 +15,9 @@ export default async function PicklistPage({ params }: { params: Promise<{ event
   const [{ data: categoryRows }, { data: eventTeamRows }, { data: rankingRows }, { data: changeRows }] = await Promise.all([
     (supabase as any).from("picklist_categories").select("id,name,color,sort_order").eq("organization_id", viewer.organizationId).order("sort_order").order("name"),
     supabase.from("event_teams").select("team_id,teams(id,team_number,name)").eq("event_id", event.id),
-    (supabase as any).from("picklist_rankings").select("id,team_id,category_id,rank,note,created_by,updated_by,updated_at").eq("event_id", event.id),
-    (supabase as any).from("picklist_change_log").select("id,team_id,action,before_state,after_state,created_at,teams(team_number,name),profiles(display_name)").eq("event_id", event.id).order("created_at", { ascending: false }).limit(100),
+    (supabase as any).from("shared_picklist_rankings").select("id,team_id,category_id,rank,note,created_by,updated_by,updated_at").eq("event_id", event.id),
+    (supabase as any).from("picklist_change_log").select("id,team_id,action,before_state,after_state,created_at,teams(team_number,name),profiles!picklist_change_log_actor_user_id_fkey(display_name)").eq("event_id", event.id).order("created_at", { ascending: false }).limit(100),
   ]);
   const teams = (eventTeamRows ?? []).map((row: any) => row.teams).filter(Boolean).sort((a: any, b: any) => a.team_number - b.team_number);
-  return <AppShell active="Picklist"><LiveRefresh tables={["picklist_categories"]}/><LiveRefresh tables={["picklist_rankings", "picklist_change_log"]} eventId={event.id}/><PageHeader eyebrow={event.name} title="Picklist."/><PicklistBoard organizationId={viewer.organizationId} eventId={event.id} userId={viewer.userId} canEdit={canEdit} categories={categoryRows ?? []} teams={teams} rankings={rankingRows ?? []} changes={changeRows ?? []}/></AppShell>;
+  return <AppShell active="Picklist"><LiveRefresh tables={["picklist_categories"]}/><LiveRefresh tables={["shared_picklist_rankings", "picklist_change_log"]} eventId={event.id}/><PageHeader eyebrow={event.name} title="Picklist."/><PicklistBoard organizationId={viewer.organizationId} eventId={event.id} userId={viewer.userId} canEdit={canEdit} categories={categoryRows ?? []} teams={teams} rankings={rankingRows ?? []} changes={changeRows ?? []}/></AppShell>;
 }
