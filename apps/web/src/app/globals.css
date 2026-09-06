@@ -324,19 +324,20 @@
   .summary-tabs button.active { @apply border-stuypulse-red bg-stuypulse-red text-white; }
   .summary-controls { @apply mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-stuypulse-border bg-stuypulse-bg/50 p-3; }
   .summary-controls label { @apply grid min-w-[220px] flex-1 gap-1 text-[10px] font-bold uppercase tracking-[0.08em] text-stuypulse-textMuted; font-family:'DM Mono',monospace; }
-  .summary-controls input { @apply min-h-11 rounded-lg border border-stuypulse-border bg-stuypulse-surface px-3 text-sm normal-case tracking-normal text-stuypulse-text outline-none placeholder:text-stuypulse-textMuted; font-family:Manrope,sans-serif; }
-  .summary-sort-state { @apply grid gap-0.5 rounded-lg border border-stuypulse-border bg-stuypulse-surface px-3 py-2 text-xs; }
-  .summary-sort-state span { @apply text-[9px] font-bold uppercase tracking-[0.08em] text-stuypulse-textMuted; font-family:'DM Mono',monospace; }
-  .summary-sort-state strong { @apply text-stuypulse-text; }
+  .summary-controls input, .summary-controls select { @apply min-h-11 rounded-lg border border-stuypulse-border bg-stuypulse-surface px-3 text-sm normal-case tracking-normal text-stuypulse-text outline-none placeholder:text-stuypulse-textMuted; font-family:Manrope,sans-serif; }
+  .summary-direction { @apply flex min-h-11 items-center gap-2 rounded-lg border border-stuypulse-border bg-stuypulse-surface px-3 text-xs text-stuypulse-text hover:bg-stuypulse-elevated; }
+  .summary-direction span { @apply text-base text-stuypulse-redHover; }
   .summary-sort-active { @apply text-stuypulse-redHover underline decoration-2 underline-offset-4; }
   .summary-empty { @apply mt-4; }
   .summary-table table { @apply min-w-[900px]; }
   .pre-scout-table { @apply min-w-[1300px]; }
   .pre-scout-table td { @apply max-w-[260px] align-top text-xs leading-relaxed; }
   .summary-table th { @apply whitespace-nowrap bg-stuypulse-elevated px-4 pt-3; }
+  .summary-table th button { @apply text-left font-bold text-stuypulse-textMuted hover:text-stuypulse-text; }
   .summary-table td { @apply px-4 py-4 font-medium; }
   .summary-table td.summary-team { @apply min-w-[200px] font-extrabold; }
   .summary-mobile-list { display: none; }
+  .summary-mobile-view-toggle, .summary-table-scroll-help { display: none; }
   .compare-picker { @apply grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-4; }
   .compare-card { @apply max-w-5xl; }
   .compare-team-heading { @apply mb-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4; }
@@ -468,7 +469,22 @@
   .comparison-metric strong::before { @apply text-[10px] font-medium text-stuypulse-textMuted; font-family:'DM Mono',monospace; content: attr(data-team); }
   .summary-card { @apply p-4; }
   .summary-table { @apply hidden; }
+  .summary-table.summary-mobile-table-visible { @apply block; }
   .summary-mobile-list { @apply grid gap-3; display: grid; }
+  .summary-mobile-list.summary-mobile-cards-hidden { display: none; }
+  .summary-mobile-view-toggle { @apply mb-3 grid grid-cols-2 overflow-hidden rounded-lg border border-stuypulse-border bg-stuypulse-bg; display: grid; }
+  .summary-mobile-view-toggle button { @apply min-h-11 text-xs font-bold text-stuypulse-textMuted; }
+  .summary-mobile-view-toggle button + button { @apply border-l border-stuypulse-border; }
+  .summary-mobile-view-toggle button.active { @apply bg-stuypulse-red text-white; }
+  .summary-table-scroll-help { @apply mb-2 text-xs text-stuypulse-textMuted; display: block; }
+  .summary-controls { @apply grid grid-cols-1 items-stretch gap-2; }
+  .summary-controls label { @apply min-w-0; }
+  .summary-controls > .muted { @apply text-center; }
+  .summary-direction { @apply justify-center; }
+  .summary-table.summary-mobile-table-visible table { @apply min-w-[720px]; }
+  .summary-table.summary-mobile-table-visible th:first-child, .summary-table.summary-mobile-table-visible td:first-child { @apply sticky left-0 z-10; }
+  .summary-table.summary-mobile-table-visible th:first-child { @apply bg-stuypulse-elevated; }
+  .summary-table.summary-mobile-table-visible td:first-child { @apply bg-stuypulse-surface; }
   .summary-mobile-card { @apply block rounded-lg border border-stuypulse-border bg-stuypulse-bg p-3.5 transition-colors active:bg-stuypulse-elevated; }
   .summary-mobile-heading { @apply mb-3 flex items-start justify-between gap-3; }
   .summary-mobile-heading > div { @apply flex min-w-0 items-baseline gap-2; }
