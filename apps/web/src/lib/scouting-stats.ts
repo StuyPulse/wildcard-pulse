@@ -12,8 +12,8 @@ const maximum = (values: number[]) => values.length ? Math.max(...values) : 0;
 export function calculateScoutStats(entries: any[]): ScoutStats {
   const autoScored = entries.map((entry) => number(entry.payload?.auto?.shoot));
   const autoFerried = entries.map((entry) => number(entry.payload?.auto?.ferry));
-  const teleopScored = entries.map((entry) => Array.isArray(entry.payload?.shifts) ? entry.payload.shifts.reduce((sum: number, shift: any) => sum + number(shift?.shoot), 0) : number(entry.payload?.teleop_fuel));
-  const teleopFerried = entries.map((entry) => Array.isArray(entry.payload?.shifts) ? entry.payload.shifts.reduce((sum: number, shift: any) => sum + number(shift?.ferry), 0) : 0);
+  const teleopScored = entries.map((entry) => number(entry.payload?.teleop?.shoot ?? entry.payload?.teleop_fuel));
+  const teleopFerried = entries.map((entry) => number(entry.payload?.teleop?.ferry));
   const autoFuel = entries.map((entry, index) => autoScored[index] + autoFerried[index] || number(entry.payload?.auto_fuel));
   const teleopFuel = entries.map((entry, index) => teleopScored[index] + teleopFerried[index] || number(entry.payload?.teleop_fuel));
   return { entries: entries.length, autoMaxScored: maximum(autoScored), autoMaxFerried: maximum(autoFerried), autoAvgScored: average(autoScored), autoAvgFerried: average(autoFerried), teleopMaxScored: maximum(teleopScored), teleopMaxFerried: maximum(teleopFerried), teleopAvgScored: average(teleopScored), teleopAvgFerried: average(teleopFerried), avgFouls: average(entries.map((entry) => number(entry.payload?.fouls))), defense: average(entries.map((entry) => number(entry.payload?.defense_level))), brokenPercent: entries.length ? entries.filter((entry) => entry.payload?.robot_broke).length / entries.length * 100 : 0, totalFuel: average(autoFuel) + average(teleopFuel), autoFuel: average(autoFuel), teleopFuel: average(teleopFuel) };

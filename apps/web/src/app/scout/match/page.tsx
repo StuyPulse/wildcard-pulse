@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { ManualMatchPicker } from "./manual-match-picker";
 import { MatchScoutPicker } from "./match-scout-picker";
 
-export default async function MatchScoutPage() {
+export default async function MatchScoutPage({ searchParams }: { searchParams: Promise<{ match?: string }> }) {
+  const { match: requestedMatchId } = await searchParams;
   const event = await getActiveEvent();
   const supabase = await createClient();
   const [{ data: matches }, { data: eventTeams }] = event ? await Promise.all([
@@ -16,7 +17,7 @@ export default async function MatchScoutPage() {
   return <AppShell active="Manual scouting">
     <PageHeader eyebrow={event?.name ?? "No active event"} title="Match scouting." />
     {event ? <div className="match-scout-grid">
-      <MatchScoutPicker matches={(matches ?? []).map((match) => ({ id: match.id, key: match.tba_match_key, number: match.match_number, type: match.match_type, red: match.red_teams, blue: match.blue_teams }))} teams={teams} />
+      <MatchScoutPicker matches={(matches ?? []).map((match) => ({ id: match.id, key: match.tba_match_key, number: match.match_number, type: match.match_type, red: match.red_teams, blue: match.blue_teams }))} teams={teams} initialMatchId={(matches ?? []).some((match) => match.id === requestedMatchId) ? requestedMatchId : ""} />
       <ManualMatchPicker teams={teams} />
     </div> : <section className="card"><p className="muted">Set an active event first.</p></section>}
   </AppShell>;

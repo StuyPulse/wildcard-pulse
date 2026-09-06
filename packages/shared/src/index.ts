@@ -15,7 +15,7 @@ export const formFieldSchema = z.object({
   type: z.enum(["counter", "boolean", "select", "rating", "notes"]),
   required: z.boolean().default(false),
   options: z.array(z.string().max(80)).optional(),
-  section: z.enum(["auto", "teleop", "endgame", "notes"]),
+  section: z.enum(["auto", "teleop", "notes"]),
   helpText: z.string().max(300).optional(),
 });
 
@@ -47,7 +47,6 @@ export const DEFAULT_2026_FORM: FormDefinition = {
     { id: "auto_mobility", label: "Left starting zone", type: "boolean", required: true, section: "auto" },
     { id: "teleop_fuel", label: "Fuel scored", type: "counter", required: true, section: "teleop" },
     { id: "collection", label: "Primary collection", type: "select", options: ["Floor", "Depot", "Outpost / Chute", "Mixed"], required: true, section: "teleop" },
-    { id: "climb", label: "Tower result", type: "select", options: ["None", "Rung 1", "Rung 2", "Rung 3"], required: true, section: "endgame" },
     { id: "defense", label: "Defense impact", type: "rating", required: false, section: "notes" },
     { id: "notes", label: "Scout notes", type: "notes", required: false, section: "notes" }
   ]

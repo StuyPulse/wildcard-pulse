@@ -1,5 +1,12 @@
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { getActiveEvent } from "@/lib/active-event";
+import { getViewerContext } from "@/lib/viewer-context";
 import { createClient } from "@/lib/supabase/server";
-import { ManualScouting } from "../manual/manual-scouting";
-export default async function GlobalPage(){const event=await getActiveEvent();const supabase=await createClient();const{data}=event?await supabase.from("event_teams").select("team_id,teams(team_number,name)").eq("event_id",event.id):{data:[]};const teams=(data??[]).map((r:any)=>({id:r.team_id,number:r.teams?.team_number,name:r.teams?.name}));return <AppShell active="Manual scouting"><PageHeader eyebrow={event?.name??"No active event"} title="Global scouting."/>{event?<ManualScouting eventId={event.id} teams={teams} type="global"/>:<section className="card"><p className="muted">Set an active event first.</p></section>}</AppShell>}
+import { GlobalDocument } from "./global-document";
+
+export default async function GlobalPage() {
+  const [event, viewer, supabase] = await Promise.all([getActiveEvent(), getViewerContext(), createClient()]);
+  const { data: document } = event ? await (supabase as any).from("event_global_documents").select("document_url").eq("event_id", event.id).maybeSingle() : { data: null };
+  const canEdit = viewer?.role === "admin" || viewer?.role === "strategist" || viewer?.role === "developer";
+  return <AppShell active="Manual scouting"><PageHeader eyebrow={event?.name ?? "No active event"} title="Global scouting."/>{event && viewer?.organizationId ? <GlobalDocument eventId={event.id} organizationId={viewer.organizationId} initialUrl={document?.document_url} canEdit={canEdit}/> : <section className="card"><p className="muted">Set an active event first.</p></section>}</AppShell>;
+}

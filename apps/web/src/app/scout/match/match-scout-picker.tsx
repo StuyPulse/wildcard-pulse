@@ -17,8 +17,8 @@ function label(match: Match) {
   return `${match.type} · ${suffix.toUpperCase()}`;
 }
 
-export function MatchScoutPicker({ matches, teams }: { matches: Match[]; teams: Team[] }) {
-  const [matchId, setMatchId] = useState("");
+export function MatchScoutPicker({ matches, teams, initialMatchId = "" }: { matches: Match[]; teams: Team[]; initialMatchId?: string }) {
+  const [matchId, setMatchId] = useState(initialMatchId);
   const [teamId, setTeamId] = useState("");
   const match = useMemo(() => matches.find((item) => item.id === matchId), [matches, matchId]);
   const allowedTeams = match ? teams.filter((team) => [...match.red, ...match.blue].includes(team.id)).sort((a, b) => a.number - b.number) : [];
@@ -27,7 +27,7 @@ export function MatchScoutPicker({ matches, teams }: { matches: Match[]; teams: 
     <div className="form-intro">
       <div className="form-kicker">Scheduled match</div>
       <h2>Scout a robot from the imported schedule.</h2>
-      <p>Choose the match first, then choose one of the six robots playing in it. Use the manual report beside this one for exceptions that are not in the schedule.</p>
+      <p>Choose the match first, then choose one of the six robots playing in it. Team buttons are alliance colored. Use the manual report beside this one for exceptions that are not in the schedule.</p>
     </div>
     <div className="form-grid">
       <div className="field">
@@ -37,13 +37,7 @@ export function MatchScoutPicker({ matches, teams }: { matches: Match[]; teams: 
           {matches.map((item) => <option key={item.id} value={item.id}>{label(item)}</option>)}
         </select>
       </div>
-      <div className="field">
-        <label htmlFor="scheduled-team">Team</label>
-        <select id="scheduled-team" value={teamId} disabled={!match} onChange={(event) => setTeamId(event.target.value)}>
-          <option value="">Choose a robot…</option>
-          {allowedTeams.map((team) => <option key={team.id} value={team.id}>{team.number} · {team.name}</option>)}
-        </select>
-      </div>
+      <div className="field"><label>Robot</label>{match ? <div className="robot-picker" aria-label="Choose a robot">{allowedTeams.map((team) => { const alliance = match.red.includes(team.id) ? "red" : "blue"; return <button type="button" key={team.id} aria-pressed={team.id === teamId} className={`robot-pick ${alliance}${team.id === teamId ? " selected" : ""}`} onClick={() => setTeamId(team.id)}>{team.number} · {team.name}</button>; })}</div> : <p className="muted">Choose a scheduled match first.</p>}</div>
     </div>
     {match && <div className="match-roster"><span className="red">Red: {teams.filter((team) => match.red.includes(team.id)).map((team) => team.number).join(" · ")}</span><span className="blue">Blue: {teams.filter((team) => match.blue.includes(team.id)).map((team) => team.number).join(" · ")}</span></div>}
     <div className="form-actions">

@@ -103,6 +103,13 @@
   .section { @apply mt-[18px]; }
   .section-title { @apply mb-2.5 mt-[22px] text-[11px] font-medium uppercase tracking-[0.12em] text-stuypulse-textMuted; font-family: 'DM Mono', monospace; }
   .form-grid { @apply grid grid-cols-2 gap-4; }
+  .auto-path-field { @apply col-span-full; }
+  .auto-path-drawer { @apply rounded-lg border border-stuypulse-border bg-stuypulse-bg p-3; }
+  .auto-path-tools { @apply mb-3 flex flex-wrap items-center gap-2; }
+  .auto-path-tools > button:not(.button) { @apply h-8 w-8 rounded-full border-2 border-white/40 ring-offset-2 ring-offset-stuypulse-bg; background: var(--pen); }
+  .auto-path-tools > button.active { @apply ring-2 ring-stuypulse-text; }
+  .auto-path-tools .button { @apply min-h-8 px-3 py-1 text-xs; }
+  .auto-path-canvas { @apply h-auto w-full touch-none rounded-md border border-stuypulse-border bg-white; aspect-ratio: 900 / 480; }
   .field label { @apply mb-2 block text-xs font-bold text-stuypulse-text; }
   .field input, .field select, .field textarea, .event-picker select, .assignment-editor select { @apply min-h-11 w-full rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3 py-2.5 text-stuypulse-text outline-none transition-colors placeholder:text-stuypulse-textMuted focus:border-stuypulse-redHover focus:ring-1 focus:ring-stuypulse-redHover; }
   .field textarea { @apply min-h-[94px] resize-y; }
@@ -113,18 +120,26 @@
   .field-map { @apply relative isolate mt-4 min-h-[440px] overflow-hidden rounded-panel border border-stuypulse-border bg-white; aspect-ratio: 2.04 / 1; }
   .field-map-art { @apply absolute inset-0 bg-cover bg-center; background-image: url('/2026-field-map.png'); }
   .field-map.flipped .field-map-art { transform: scaleX(-1); }
-  .spot { @apply absolute z-10 grid h-[76px] w-[142px] -translate-y-1/2 content-center justify-items-center gap-1 rounded-lg border-2 border-stuypulse-red bg-stuypulse-surface/95 px-3 py-2 text-center text-stuypulse-text shadow-panel transition hover:scale-105 hover:bg-stuypulse-red hover:text-white; grid-template-rows: 2rem auto; top:var(--spot-y); left:9%; }
-  .spot span { @apply text-4xl font-light leading-none text-stuypulse-red; }
+  .spot { @apply absolute z-10 grid h-[44px] w-[78px] -translate-y-1/2 content-center justify-items-center gap-0.5 rounded-md border-2 border-stuypulse-red bg-stuypulse-surface/95 px-1 py-1 text-center text-stuypulse-text shadow-panel transition hover:scale-105 hover:bg-stuypulse-red hover:text-white; grid-template-rows: 1rem auto; top:var(--spot-y); left:9%; }
+  .spot span { @apply text-lg font-extrabold leading-none text-stuypulse-red; }
   .spot small { @apply text-[11px] font-extrabold leading-none tracking-[0.03em]; }
   .spot.red { @apply bg-stuypulse-red text-white; }
   .spot.red span { @apply text-white; }
   .spot.blue { @apply border-sky-500 bg-sky-600 text-white; }
   .spot.blue span { @apply text-white; }
+  .spot.confirmed { @apply border-stuypulse-redPressed bg-stuypulse-redPressed ring-4 ring-stuypulse-red/30; }
+  .spot.blue.confirmed { @apply border-sky-900 bg-sky-800 ring-sky-500/35; }
   .spot-choice { @apply mt-3 text-xs font-semibold text-stuypulse-textMuted; font-family: 'DM Mono', monospace; }
   .team-picker { @apply mt-3 flex flex-wrap gap-2; }
   .team-pick { @apply min-h-11 rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3 py-2 text-sm font-bold; }
   .team-pick.red { @apply border-stuypulse-red bg-stuypulse-red text-white; }
   .team-pick.blue { @apply border-sky-500 bg-sky-600 text-white; }
+  .robot-picker { @apply mt-2 grid grid-cols-2 gap-2; }
+  .robot-pick { @apply min-h-12 rounded-lg border-2 px-3 py-2 text-left text-sm font-extrabold transition hover:brightness-110; }
+  .robot-pick.red { @apply border-stuypulse-red bg-stuypulse-red/20 text-stuypulse-text; }
+  .robot-pick.blue { @apply border-sky-500 bg-sky-600/25 text-stuypulse-text; }
+  .robot-pick.selected.red { @apply bg-stuypulse-red text-white; }
+  .robot-pick.selected.blue { @apply bg-sky-600 text-white; }
   .option-toggle { @apply flex min-h-11 items-center gap-3 rounded-lg border border-stuypulse-border bg-stuypulse-elevated px-3 text-sm font-bold text-stuypulse-text; }
   .option-toggle input { @apply h-5 w-5 accent-stuypulse-red; }
 
@@ -173,6 +188,13 @@
   .assignment-editor .error, .assignment-editor .trend { @apply col-span-full m-0; }
   .pit-photo-grid { @apply grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3; }
   .pit-photo-grid img { @apply h-[180px] w-full rounded-lg border border-stuypulse-border object-cover; }
+  .photo-coverage { @apply grid grid-cols-2 gap-3; }
+  .photo-coverage > div { @apply rounded-lg border border-stuypulse-border bg-stuypulse-bg p-3; }
+  .photo-coverage strong { @apply text-xs uppercase tracking-[0.08em] text-stuypulse-textMuted; }
+  .photo-coverage p { @apply mb-0 mt-2 text-sm font-bold; }
+  .global-document { @apply overflow-hidden; }
+  .global-document-editor { @apply mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3; }
+  .global-document-frame { @apply h-[70vh] w-full rounded-lg border border-stuypulse-border bg-white; }
   .comparison-row { @apply mb-4 grid gap-1.5; }
   .comparison-row strong { @apply text-xs text-stuypulse-textMuted; }
   .comparison-bar { @apply min-h-7 rounded-md px-2 py-1 text-xs font-bold text-white; }
@@ -214,6 +236,9 @@
   .table-scroll { @apply overflow-x-auto; -webkit-overflow-scrolling: touch; }
   .table-scroll table { @apply min-w-[680px]; }
   .schedule-filters { @apply mb-4 grid grid-cols-3 gap-3; }
+  .practice-setup { @apply mb-4 rounded-lg border border-stuypulse-border bg-stuypulse-bg p-4; }
+  .practice-setup summary { @apply cursor-pointer text-sm font-bold; }
+  .practice-match-form { @apply mt-3 grid grid-cols-[120px_minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-3; }
   .schedule-filters select { @apply w-full rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3 py-2 text-sm text-stuypulse-text; }
   .filter-tabs, .event-selector-links { @apply flex flex-wrap gap-2; }
   .filter-tabs a, .event-selector-links a { @apply rounded-lg border border-stuypulse-border px-3 py-2 text-xs font-bold text-stuypulse-textMuted hover:bg-stuypulse-elevated hover:text-stuypulse-text; }
@@ -258,6 +283,8 @@
   .summary-tabs button { @apply min-h-10 rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3.5 text-xs font-extrabold text-stuypulse-textMuted transition hover:bg-stuypulse-elevated hover:text-stuypulse-text; }
   .summary-tabs button.active { @apply border-stuypulse-red bg-stuypulse-red text-white; }
   .summary-table table { @apply min-w-[900px]; }
+  .pre-scout-table { @apply min-w-[1300px]; }
+  .pre-scout-table td { @apply max-w-[260px] align-top text-xs leading-relaxed; }
   .summary-table th { @apply whitespace-nowrap bg-stuypulse-elevated px-4 pt-3; }
   .summary-table td { @apply px-4 py-4 font-medium; }
   .summary-table td.summary-team { @apply min-w-[200px] font-extrabold; }

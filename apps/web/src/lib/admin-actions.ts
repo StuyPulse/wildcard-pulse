@@ -4,6 +4,7 @@ import { DEFAULT_2026_FORM, formDefinitionSchema, organizationRoleSchema } from 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { randomUUID } from "crypto";
 
 export type ActionState = { error?: string; success?: string };
 async function adminContext() {
@@ -13,6 +14,29 @@ async function adminContext() {
   const { data: member } = await supabase.from("organization_members").select("organization_id, role").eq("user_id", user.id).in("role", ["admin", "developer"]).limit(1).maybeSingle();
   if (!member) throw new Error("Admin access required.");
   return { supabase, organizationId: member.organization_id };
+}
+
+export async function createPracticeMatch(_: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    const parsed = z.object({ eventId: z.string().uuid(), matchNumber: z.coerce.number().int().positive(), redTeams: z.string(), blueTeams: z.string() }).safeParse({ eventId: formData.get("eventId"), matchNumber: formData.get("matchNumber"), redTeams: formData.get("redTeams"), blueTeams: formData.get("blueTeams") });
+    if (!parsed.success) return { error: "Enter a positive practice-match number and the red and blue team numbers." };
+    const parseAlliance = (value: string) => [...new Set(value.split(/[\\s,]+/).filter(Boolean).map(Number))];
+    const redNumbers = parseAlliance(parsed.data.redTeams), blueNumbers = parseAlliance(parsed.data.blueTeams);
+    if (!redNumbers.length || !blueNumbers.length || redNumbers.length > 3 || blueNumbers.length > 3 || [...redNumbers, ...blueNumbers].some((number) => !Number.isInteger(number) || number <= 0) || redNumbers.some((number) => blueNumbers.includes(number))) return { error: "Enter one to three distinct positive team numbers for each alliance." };
+    const { organizationId } = await adminContext(); const database: any = createAdminClient();
+    const { data: event } = await database.from("events").select("id").eq("id", parsed.data.eventId).eq("organization_id", organizationId).maybeSingle();
+    if (!event) return { error: "This event is unavailable." };
+    const numbers = [...redNumbers, ...blueNumbers];
+    const { data: existingTeams } = await database.from("teams").select("id,team_number").eq("organization_id", organizationId).in("team_number", numbers);
+    const existingByNumber = new Map((existingTeams ?? []).map((team: any) => [team.team_number, team.id]));
+    const missing = numbers.filter((number) => !existingByNumber.has(number));
+    if (missing.length) { const { error } = await database.from("teams").insert(missing.map((team_number) => ({ organization_id: organizationId, team_number, name: `FRC Team ${team_number}` }))); if (error) return importDatabaseError("practice-match teams", error); const { data: added } = await database.from("teams").select("id,team_number").eq("organization_id", organizationId).in("team_number", missing); (added ?? []).forEach((team: any) => existingByNumber.set(team.team_number, team.id)); }
+    const teamLinks = numbers.map((number) => ({ event_id: event.id, team_id: existingByNumber.get(number) }));
+    const { error: linkError } = await database.from("event_teams").upsert(teamLinks, { onConflict: "event_id,team_id" }); if (linkError) return importDatabaseError("practice-match event teams", linkError);
+    const { error } = await database.from("matches").insert({ event_id: event.id, tba_match_key: `manual_practice_${randomUUID()}`, match_number: parsed.data.matchNumber, match_type: "practice", red_teams: redNumbers.map((number) => existingByNumber.get(number)), blue_teams: blueNumbers.map((number) => existingByNumber.get(number)), status: "scheduled" });
+    if (error) return importDatabaseError("practice match", error);
+    revalidatePath("/scout/match"); revalidatePath(`/events/${parsed.data.eventId}/matches`); return { success: "Practice match added locally. It will never be sent to or overwritten by TBA." };
+  } catch { return { error: "Admin access is required to add a practice match." }; }
 }
 
 export async function createEvent(_: ActionState, formData: FormData): Promise<ActionState> {
