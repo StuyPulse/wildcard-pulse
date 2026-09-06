@@ -318,6 +318,31 @@
   .picklist-activity-row strong { @apply text-sm; }
   .picklist-activity-row span, .picklist-activity-row small { @apply text-xs text-stuypulse-textMuted; }
   .picklist-activity-row small { @apply shrink-0 text-right; font-family:'DM Mono',monospace; }
+  .picklist-guide { @apply mb-5 flex flex-wrap items-center justify-between gap-3; }
+  .picklist-guide h2 { @apply mb-1 text-lg; }
+  .picklist-guide p { @apply mb-0 max-w-3xl text-sm leading-relaxed; }
+  .picklist-autosave { @apply inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-bold text-emerald-400; }
+  .picklist-tier-board { @apply grid grid-cols-2 gap-4; }
+  .picklist-tier { @apply overflow-hidden border-l-4 p-0; border-left-color:var(--tier); }
+  .picklist-tier-head { @apply flex items-center justify-between border-b border-stuypulse-border bg-stuypulse-bg/60 px-4 py-3; }
+  .picklist-tier-head p { @apply mb-0 mt-0.5 text-xs; }
+  .picklist-tier-label { @apply text-base font-extrabold; color:var(--tier); }
+  .picklist-tier-list { @apply grid gap-px bg-stuypulse-border; }
+  .picklist-team-row { @apply grid grid-cols-[minmax(150px,1fr)_130px_auto_auto_auto] items-center gap-3 bg-stuypulse-surface p-3; }
+  .picklist-team-name { @apply flex min-w-0 items-center gap-2; }
+  .picklist-team-position { @apply grid h-7 w-7 shrink-0 place-items-center rounded-full bg-stuypulse-elevated text-xs font-extrabold text-stuypulse-textMuted; font-family:'DM Mono',monospace; }
+  .picklist-team-name > span:last-child { @apply flex min-w-0 flex-col; }
+  .picklist-team-name strong { @apply text-sm; }
+  .picklist-team-name small { @apply truncate text-xs text-stuypulse-textMuted; }
+  .picklist-tier-select { @apply grid gap-1 text-[9px] font-bold uppercase tracking-[0.08em] text-stuypulse-textMuted; font-family:'DM Mono',monospace; }
+  .picklist-tier-select select { @apply min-h-9 rounded-md border border-stuypulse-border bg-stuypulse-bg px-2 text-xs font-bold normal-case tracking-normal text-stuypulse-text; font-family:Manrope,sans-serif; }
+  .picklist-order-buttons { @apply inline-flex overflow-hidden rounded-md border border-stuypulse-border; }
+  .picklist-order-buttons button { @apply inline-flex min-h-9 items-center gap-1 border-r border-stuypulse-border px-2 text-[10px] font-bold text-stuypulse-text hover:bg-stuypulse-elevated last:border-r-0 disabled:cursor-not-allowed disabled:opacity-35; }
+  .picklist-note summary { @apply whitespace-nowrap text-xs text-stuypulse-textMuted hover:text-stuypulse-text; }
+  .picklist-note textarea { @apply mt-2 min-h-20 w-56 rounded-md border border-stuypulse-border bg-stuypulse-bg p-2 text-xs text-stuypulse-text; }
+  .picklist-save-state { @apply whitespace-nowrap text-[10px] font-bold text-emerald-400; font-family:'DM Mono',monospace; }
+  .picklist-read-tier { @apply rounded-full px-2 py-1 text-xs font-bold; background-color:color-mix(in srgb, var(--tier) 14%, transparent); color:var(--tier); }
+  .picklist-empty-tier { @apply m-0 p-4 text-xs; }
   .summary-card { @apply p-6; }
   .summary-tabs { @apply mb-5 flex flex-wrap gap-2 border-b border-stuypulse-border pb-4; }
   .summary-tabs button { @apply min-h-10 rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3.5 text-xs font-extrabold text-stuypulse-textMuted transition hover:bg-stuypulse-elevated hover:text-stuypulse-text; }
@@ -512,6 +537,18 @@
   .pick-row .pick-note { @apply col-auto; }
   .picklist-activity-row { @apply flex-col gap-1; }
   .picklist-activity-row small { @apply text-left; }
+  .picklist-tier-board { @apply grid-cols-1 gap-3; }
+  .picklist-guide { @apply items-start; }
+  .picklist-autosave { @apply w-full justify-center; }
+  .picklist-team-row { @apply grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-3; }
+  .picklist-tier-select { @apply col-span-2; }
+  .picklist-tier-select select { @apply min-h-11 px-3 text-sm; }
+  .picklist-order-buttons { @apply col-span-2 grid grid-cols-2; }
+  .picklist-order-buttons button { @apply min-h-11 justify-center text-xs; }
+  .picklist-note { @apply col-span-2; }
+  .picklist-note summary { @apply min-h-10 flex items-center; }
+  .picklist-note textarea { @apply min-h-24 w-full text-sm; }
+  .picklist-save-state { @apply self-center text-right; }
   .photo-coverage { @apply grid-cols-1; }
   .global-document-editor { @apply grid-cols-1; }
   .global-document-editor .button { @apply w-full; }
