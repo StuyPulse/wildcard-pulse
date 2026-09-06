@@ -6,8 +6,12 @@ type Format = "date" | "time" | "date-time";
 
 export function formatLocalDateTime(value: string | number | Date, format: Format = "date-time") {
   const date = new Date(value);
-  const base = format === "date" ? { dateStyle: "medium" as const } : format === "time" ? { timeStyle: "short" as const } : { dateStyle: "medium" as const, timeStyle: "short" as const };
-  return new Intl.DateTimeFormat(undefined, { ...base, timeZoneName: format === "date" ? undefined : "short" }).format(date);
+  const options: Intl.DateTimeFormatOptions = format === "date"
+    ? { year: "numeric", month: "short", day: "numeric" }
+    : format === "time"
+      ? { hour: "numeric", minute: "2-digit", timeZoneName: "short" }
+      : { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" };
+  return new Intl.DateTimeFormat(undefined, options).format(date);
 }
 
 export function LocalDateTime({ value, format = "date-time" }: { value?: string | number | Date | null; format?: Format }) {
