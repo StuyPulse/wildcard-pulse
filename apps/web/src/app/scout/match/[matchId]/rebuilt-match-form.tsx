@@ -16,12 +16,12 @@ type Props = {
 type Score = { shoot: number; ferry: number };
 
 const spots = [
-  { id: "line-1", label: "Line 1", x: "18%", y: "10%" },
-  { id: "depot", label: "Depot", x: "18%", y: "28%" },
-  { id: "depot-bump", label: "Depot Bump", x: "18%", y: "46%" },
-  { id: "hub", label: "Hub", x: "18%", y: "64%" },
-  { id: "outpost-bump", label: "Outpost Bump", x: "18%", y: "82%" },
-  { id: "outpost", label: "Outpost", x: "18%", y: "93%" },
+  { id: "line-1", label: "Line 1", x: "26%", y: "10%" },
+  { id: "depot", label: "Depot", x: "18%", y: "20%" },
+  { id: "depot-bump", label: "Depot Bump", x: "18%", y: "35%" },
+  { id: "hub", label: "Hub", x: "18%", y: "50%" },
+  { id: "outpost-bump", label: "Outpost Bump", x: "18%", y: "65%" },
+  { id: "outpost", label: "Outpost", x: "18%", y: "80%" },
   { id: "line-2", label: "Line 2", x: "26%", y: "93%" },
 ];
 const tags = ["Intake broke", "Shooter broke", "Drive issue", "Electrical", "Other"];
