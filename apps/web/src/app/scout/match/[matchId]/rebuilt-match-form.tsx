@@ -16,13 +16,13 @@ type Props = {
 type Score = { shoot: number; ferry: number };
 
 const spots = [
-  { id: "position-1", label: "Position 1", x: "18%", y: "10%" },
-  { id: "position-2", label: "Position 2", x: "18%", y: "28%" },
-  { id: "position-3", label: "Position 3", x: "18%", y: "46%" },
-  { id: "position-4", label: "Position 4", x: "18%", y: "64%" },
-  { id: "position-5", label: "Position 5", x: "18%", y: "82%" },
-  { id: "position-6", label: "Position 6", x: "10%", y: "93%" },
-  { id: "position-7", label: "Position 7", x: "26%", y: "93%" },
+  { id: "line-1", label: "Line 1", x: "18%", y: "10%" },
+  { id: "depot", label: "Depot", x: "18%", y: "28%" },
+  { id: "depot-bump", label: "Depot Bump", x: "18%", y: "46%" },
+  { id: "hub", label: "Hub", x: "18%", y: "64%" },
+  { id: "outpost-bump", label: "Outpost Bump", x: "18%", y: "82%" },
+  { id: "outpost", label: "Outpost", x: "18%", y: "93%" },
+  { id: "line-2", label: "Line 2", x: "26%", y: "93%" },
 ];
 const tags = ["Intake broke", "Shooter broke", "Drive issue", "Electrical", "Other"];
 const empty = (): Score => ({ shoot: 0, ferry: 0 });
@@ -94,7 +94,7 @@ export function RebuiltMatchForm({ eventId, matchId, teamId, assignmentId, teamN
 
   return <section className="scouting-card match-form">
     <div className="form-intro"><div className="form-kicker">{manualMatch ? `Manual match report · ${manualMatch.stage}${manualMatch.label ? ` · ${manualMatch.label}` : ""}` : `Match scouting · ${alliance} alliance`}</div><h2>Team {teamNumber}</h2><p>{manualMatch ? "This exception uses the same match-scouting fields and saves to the same team history as scheduled reports." : "Use the large controls while the match runs. Save a draft at any point; submit once the report is complete."}</p></div>
-      <div className="form-section"><div className="section-title">Auton starting position</div><p className="muted">Five positions run along the field length; positions 6 and 7 are on the two alliance lines. Tap a position, then double-click it to confirm in a darker alliance color.</p><button type="button" className="button secondary mobile-full" disabled={saving || submitted} aria-pressed={noShow} onClick={() => setNoShow(!noShow)}>{noShow ? "Undo no show" : "Mark no show"}</button><fieldset disabled={disabled}><legend className="sr-only">Autonomous starting position</legend><div className={`field-map ${alliance === "blue" ? "flipped" : "red-side"}`}><div className="field-map-art" aria-hidden="true"/>{spots.map((item) => <button type="button" key={item.id} aria-label={`Start at ${item.label}`} aria-pressed={spot === item.id} style={{"--spot-x":item.x,"--spot-y":item.y} as CSSProperties} className={spot === item.id ? `spot ${alliance}${spotConfirmed ? " confirmed" : ""}` : "spot"} onClick={() => { setSpot((current) => current === item.id ? undefined : item.id); setSpotConfirmed(false); }} onDoubleClick={() => { setSpot(item.id); setSpotConfirmed(true); }}><span>{item.label.replace("Position ", "")}</span><small>{item.label}</small></button>)}</div></fieldset><div className="spot-choice" aria-live="polite">{spot ? `Starting position: ${spots.find((item)=>item.id===spot)?.label}${spotConfirmed ? " · confirmed" : ""}` : "Choose one of 7 starting positions."}</div></div>
+      <div className="form-section"><div className="section-title">Auton starting position</div><p className="muted">The red labels run Line 1 → Depot → Depot Bump → Hub → Outpost Bump → Outpost → Line 2; blue mirrors that order. Tap a position, then double-click it to confirm in a darker alliance color.</p><button type="button" className="button secondary mobile-full" disabled={saving || submitted} aria-pressed={noShow} onClick={() => setNoShow(!noShow)}>{noShow ? "Undo no show" : "Mark no show"}</button><fieldset disabled={disabled}><legend className="sr-only">Autonomous starting position</legend><div className={`field-map ${alliance === "blue" ? "flipped" : "red-side"}`}><div className="field-map-art" aria-hidden="true"/>{spots.map((item) => <button type="button" key={item.id} aria-label={`Start at ${item.label}`} aria-pressed={spot === item.id} style={{"--spot-x":item.x,"--spot-y":item.y} as CSSProperties} className={spot === item.id ? `spot ${alliance}${spotConfirmed ? " confirmed" : ""}` : "spot"} onClick={() => { setSpot((current) => current === item.id ? undefined : item.id); setSpotConfirmed(false); }} onDoubleClick={() => { setSpot(item.id); setSpotConfirmed(true); }}><span>{item.label}</span></button>)}</div></fieldset><div className="spot-choice" aria-live="polite">{spot ? `Starting position: ${spots.find((item)=>item.id===spot)?.label}${spotConfirmed ? " · confirmed" : ""}` : "Choose one of 7 starting positions."}</div></div>
     <fieldset disabled={disabled}><legend className="sr-only">Match scouting details</legend>
       <div className="form-section"><div className="section-title">Scoring</div><p className="muted">Track the two match periods only. Shoot and ferry stay separate; use ±10 for fast entry.</p><div className="scoring-table"><div className="scoring-head"><span>Period</span><span>Shoot</span><span>Ferry</span></div><ScoreRow label="Autonomous" value={auto} update={(key, value) => setAuto((score) => ({ ...score, [key]: Math.max(0, value) }))} autoRow /><ScoreRow label="Teleop" value={teleop} update={(key, value) => setTeleop((score) => ({ ...score, [key]: Math.max(0, value) }))} /></div></div>
       <div className="form-section"><div className="section-title">Fouls</div><Counter label="Fouls drawn by this team" value={fouls} by={1} setValue={setFouls} /></div>
