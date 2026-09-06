@@ -301,6 +301,12 @@
   .pick-row input, .pick-row select, .pick-row textarea { @apply mt-1 block min-h-10 w-full rounded-md border border-stuypulse-border bg-stuypulse-surface px-2 py-1 text-sm text-stuypulse-text; font-family:Manrope,sans-serif; }
   .pick-row textarea { @apply min-h-10 max-h-20 resize-y; }
   .pick-mobile-order { display: none; }
+  .picklist-activity { @apply grid gap-2; }
+  .picklist-activity-row { @apply flex items-start justify-between gap-4 rounded-lg border border-stuypulse-border bg-stuypulse-bg/50 px-3 py-2.5; }
+  .picklist-activity-row > div { @apply grid gap-0.5; }
+  .picklist-activity-row strong { @apply text-sm; }
+  .picklist-activity-row span, .picklist-activity-row small { @apply text-xs text-stuypulse-textMuted; }
+  .picklist-activity-row small { @apply shrink-0 text-right; font-family:'DM Mono',monospace; }
   .summary-card { @apply p-6; }
   .summary-tabs { @apply mb-5 flex flex-wrap gap-2 border-b border-stuypulse-border pb-4; }
   .summary-tabs button { @apply min-h-10 rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3.5 text-xs font-extrabold text-stuypulse-textMuted transition hover:bg-stuypulse-elevated hover:text-stuypulse-text; }
@@ -469,6 +475,8 @@
   .pick-mobile-order button { @apply min-h-11 rounded-lg border border-stuypulse-border bg-stuypulse-elevated px-3 text-xs font-bold text-stuypulse-text disabled:opacity-30; }
   .category-order-buttons button { @apply h-8 w-8 text-sm; }
   .pick-row .pick-note { @apply col-auto; }
+  .picklist-activity-row { @apply flex-col gap-1; }
+  .picklist-activity-row small { @apply text-left; }
   .photo-coverage { @apply grid-cols-1; }
   .global-document-editor { @apply grid-cols-1; }
   .global-document-editor .button { @apply w-full; }
