@@ -2,6 +2,7 @@ import { AppShell, PageHeader } from "@/components/app-shell";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { LocalDateTime } from "@/components/local-date-time";
 
 const labels: Record<string, string> = {
   auto: "Autonomous", auto_fuel: "Autonomous fuel", break_tag: "Breakage type", break_timestamp: "Breakage time", comments: "Comments", defended_teams: "Teams defended", defense: "Played defense", defense_level: "Defense level", ferry: "Ferried", fouls: "Fouls", manual_match: "Manual match", no_show: "No show", no_show_reason: "No-show reason", robot_broke: "Robot broke or was disabled", shoot: "Scored", starting_spot: "Starting position", starting_spot_confirmed: "Starting position confirmed", teleop: "Teleop", teleop_fuel: "Teleop fuel",
@@ -14,10 +15,14 @@ function PayloadValue({ value }: { value: unknown }) {
   if (typeof value === "object" && value !== null) return <PayloadGrid payload={value as Record<string, unknown>} compact/>;
   return <span>{scalar(value)}</span>;
 }
+function AutoPathPreview({ svg }: { svg: string }) {
+  if (!svg.includes("<svg") || !svg.includes("<path")) return <span>Not recorded</span>;
+  return <div className="auto-path-preview"><img src={`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`} alt="Autonomous route drawn over the 2026 field"/></div>;
+}
 function PayloadGrid({ payload, compact = false }: { payload: Record<string, unknown>; compact?: boolean }) {
   const fields = Object.entries(payload).filter(([, value]) => value !== undefined);
   if (!fields.length) return <p className="muted">No field values were saved for this entry.</p>;
-  return <dl className={compact ? "submission-detail-grid submission-detail-grid-compact" : "submission-detail-grid"}>{fields.map(([key, value]) => <div key={key}><dt>{fieldLabel(key)}</dt><dd><PayloadValue value={value}/></dd></div>)}</dl>;
+  return <dl className={compact ? "submission-detail-grid submission-detail-grid-compact" : "submission-detail-grid"}>{fields.map(([key, value]) => <div key={key}><dt>{fieldLabel(key)}</dt><dd>{key === "auto_routines_drawing" && typeof value === "string" ? <AutoPathPreview svg={value}/> : <PayloadValue value={value}/>}</dd></div>)}</dl>;
 }
 
 export default async function SubmissionDetailPage({ params }: { params: Promise<{ entryId: string }> }) {
@@ -27,5 +32,5 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
   if (!entry) notFound();
   const timestamp = entry.submitted_at ?? entry.created_at;
   const teamName = [entry.teams?.team_number, entry.teams?.name].filter(Boolean).join(" · ") || "Team report";
-  return <AppShell active="Submissions"><PageHeader eyebrow="Scouting record" title={teamName}><Link className="link" href="/submissions">← All submissions</Link></PageHeader><section className="card submission-detail"><div className="card-head"><div><h2>{entry.entry_type.replace("_", " ")} report</h2><p className="muted">{entry.entry_type === "match" && entry.matches?.match_number ? `Qualification ${entry.matches.match_number} · ` : ""}{entry.profiles?.display_name ?? "Scout"} · {timestamp ? new Date(timestamp).toLocaleString() : "Saved draft"}</p></div><span className={`tag ${entry.status === "submitted" ? "complete" : "pending"}`}>{entry.status}</span></div><div className="submission-meta"><span>Form v{entry.form_version}</span><span>Last updated {new Date(entry.updated_at).toLocaleString()}</span></div><PayloadGrid payload={entry.payload ?? {}}/></section></AppShell>;
+  return <AppShell active="Submissions"><PageHeader eyebrow="Scouting record" title={teamName}><Link className="link" href="/submissions">All submissions</Link></PageHeader><section className="card submission-detail"><div className="card-head"><div><h2>{entry.entry_type.replace("_", " ")} report</h2><p className="muted">{entry.entry_type === "match" && entry.matches?.match_number ? `Qualification ${entry.matches.match_number} · ` : ""}{entry.profiles?.display_name ?? "Scout"} · {timestamp ? <LocalDateTime value={timestamp}/> : "Saved draft"}</p></div><span className={`tag ${entry.status === "submitted" ? "complete" : "pending"}`}>{entry.status}</span></div><div className="submission-meta"><span>Form v{entry.form_version}</span><span>Last updated <LocalDateTime value={entry.updated_at}/></span></div><PayloadGrid payload={entry.payload ?? {}}/></section></AppShell>;
 }

@@ -49,6 +49,9 @@
   .mobile-nav, .mobile-more { display: none; }
 
   .topbar { @apply mb-8 flex items-center justify-between; }
+  .topbar-title { @apply flex items-start gap-3; }
+  .topbar-actions { @apply flex items-center gap-3; }
+  .back-button { @apply mt-1 inline-flex min-h-9 shrink-0 items-center rounded-lg border border-stuypulse-border bg-stuypulse-surface px-2.5 text-xs font-bold text-stuypulse-textMuted transition hover:bg-stuypulse-elevated hover:text-stuypulse-text; }
   .eyebrow { @apply text-[11px] font-medium uppercase tracking-[0.12em] text-stuypulse-textMuted; font-family: 'DM Mono', monospace; }
   .event-chip { @apply flex items-center gap-2 rounded-lg border border-stuypulse-border bg-stuypulse-surface px-3 py-2 text-xs text-stuypulse-textMuted shadow-panel; }
   .online { @apply h-[7px] w-[7px] rounded-full bg-stuypulse-success shadow-status; }
@@ -99,6 +102,8 @@
   .submission-detail-grid-compact dd { @apply text-xs; }
   .submission-array { @apply grid gap-2; }
   .submission-array-item { @apply rounded-md border border-stuypulse-border bg-stuypulse-surface p-2; }
+  .auto-path-preview { @apply relative aspect-[1380/674] overflow-hidden rounded-md border border-stuypulse-border bg-white; background-image: url('/2026-field-map.png'); background-position: center; background-size: cover; }
+  .auto-path-preview img { @apply absolute inset-0 h-full w-full; }
   .muted { @apply text-xs text-stuypulse-textMuted; }
   .section { @apply mt-[18px]; }
   .section-title { @apply mb-2.5 mt-[22px] text-[11px] font-medium uppercase tracking-[0.12em] text-stuypulse-textMuted; font-family: 'DM Mono', monospace; }
@@ -120,9 +125,9 @@
   .field-map { @apply relative isolate mt-4 min-h-[440px] overflow-hidden rounded-panel border border-stuypulse-border bg-white; aspect-ratio: 2.04 / 1; }
   .field-map-art { @apply absolute inset-0 bg-cover bg-center; background-image: url('/2026-field-map.png'); }
   .field-map.flipped .field-map-art { transform: scaleX(-1); }
-  .spot { @apply absolute z-10 grid h-11 w-[86px] -translate-y-1/2 content-center justify-items-center rounded-md border-2 border-stuypulse-red bg-stuypulse-surface/95 px-1 py-1 text-center text-stuypulse-text shadow-panel transition hover:scale-105 hover:bg-stuypulse-red hover:text-white; top:var(--spot-y); left:var(--spot-x); }
+  .spot { @apply absolute z-10 grid h-12 w-[96px] -translate-y-1/2 content-center justify-items-center rounded-md border-2 border-stuypulse-red bg-stuypulse-surface px-1 py-1 text-center text-stuypulse-text shadow-panel transition hover:scale-105 hover:bg-stuypulse-red hover:text-white; top:var(--spot-y); left:var(--spot-x); }
   .field-map.flipped .spot { left:calc(100% - var(--spot-x)); }
-  .spot span { @apply max-w-full text-[10px] font-extrabold leading-tight text-stuypulse-red; }
+  .spot span { @apply max-w-full text-[12px] font-extrabold leading-tight text-stuypulse-text; text-shadow: 0 1px 2px rgb(0 0 0 / 0.45); }
   .spot.red { @apply bg-stuypulse-red text-white; }
   .spot.red span { @apply text-white; }
   .spot.blue { @apply border-sky-500 bg-sky-600 text-white; }
@@ -366,6 +371,7 @@
   .mobile-more .nav-item[style] { @apply mt-2 border-t border-stuypulse-border pt-3; }
   .main { @apply ml-0 w-full px-3.5 pt-4; padding-bottom: max(108px, calc(92px + env(safe-area-inset-bottom))); }
   .topbar, .assignment-toolbar, .event-picker, .card-head { @apply flex-col items-stretch gap-3; }
+  .topbar-title, .topbar-actions { @apply flex-wrap; }
   .card-head > .link { @apply inline-flex min-h-11 items-center; }
   .topbar { @apply mb-6; }
   .card { @apply p-4; }
@@ -391,8 +397,8 @@
   .form-section { @apply p-4; }
   .match-roster { @apply flex-col gap-1.5; }
   .field-map { @apply min-h-[248px]; }
-  .spot { @apply h-9 w-[72px] px-0.5 py-0; }
-  .spot span { @apply text-[7px]; }
+  .spot { @apply h-10 w-[82px] px-0.5 py-0; }
+  .spot span { @apply text-[9px]; }
   .spot.confirmed { @apply ring-2; }
   .robot-picker { @apply grid-cols-1; }
   .robot-pick { @apply min-h-14 px-4; }
