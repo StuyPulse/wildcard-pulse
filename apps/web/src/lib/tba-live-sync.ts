@@ -16,12 +16,43 @@ const matchSchema = z.object({
   score_breakdown: z.object({ red: z.record(z.string(), z.unknown()).nullable(), blue: z.record(z.string(), z.unknown()).nullable() }).nullable().optional(),
 });
 
-type SyncResult = { updated: boolean; skipped?: boolean; message: string };
+export type LiveSyncResult = { updated: boolean; skipped?: boolean; message: string };
+export type ActiveEventSyncResult = LiveSyncResult & { eventKey: string };
 const intervalMs = 25_000;
 const typeFor = (level: string) => level === "qm" ? "qualification" : level === "pr" ? "practice" : "playoff";
 const scoreFor = (score: number) => score >= 0 ? score : null;
+const tbaSimpleTeamSchema = z.object({ team_number: z.number().int().positive(), nickname: z.string().nullable().optional() });
 
-export async function syncLiveEvent(eventId: string, organizationId: string): Promise<SyncResult> {
+async function ensureLiveEventRoster(database: any, event: { id: string; event_key: string }, organizationId: string, key: string, teamNumbers: number[]) {
+  const { data: storedTeams, error: storedTeamsError } = await database.from("teams").select("id,team_number").eq("organization_id", organizationId);
+  if (storedTeamsError) throw new Error("Could not load the event team directory.");
+  let teamIdByNumber = new Map((storedTeams ?? []).map((team: { id: string; team_number: number }) => [team.team_number, team.id]));
+  const missingNumbers = teamNumbers.filter((number) => !teamIdByNumber.has(number));
+
+  if (missingNumbers.length) {
+    let namesByNumber = new Map<number, string>();
+    try {
+      const response = await fetch(`https://www.thebluealliance.com/api/v3/event/${event.event_key}/teams/simple`, { headers: { "X-TBA-Auth-Key": key }, cache: "no-store" });
+      const parsed = response.ok ? z.array(tbaSimpleTeamSchema).safeParse(await response.json()) : null;
+      if (parsed?.success) namesByNumber = new Map(parsed.data.map((team) => [team.team_number, team.nickname || `FRC Team ${team.team_number}`]));
+    } catch {
+      // Match data remains useful even if the optional display-name lookup is unavailable.
+    }
+    const { error: saveTeamsError } = await database.from("teams").upsert(missingNumbers.map((team_number) => ({ organization_id: organizationId, team_number, name: namesByNumber.get(team_number) ?? `FRC Team ${team_number}` })), { onConflict: "organization_id,team_number" });
+    if (saveTeamsError) throw new Error("Could not save the live event team directory.");
+    const { data: refreshedTeams, error: refreshedTeamsError } = await database.from("teams").select("id,team_number").eq("organization_id", organizationId);
+    if (refreshedTeamsError) throw new Error("Could not reload the live event team directory.");
+    teamIdByNumber = new Map((refreshedTeams ?? []).map((team: { id: string; team_number: number }) => [team.team_number, team.id]));
+  }
+
+  const unresolvedTeam = teamNumbers.find((number) => !teamIdByNumber.has(number));
+  if (unresolvedTeam) throw new Error(`Could not prepare team ${unresolvedTeam} for the live event.`);
+  const { error: linkError } = await database.from("event_teams").upsert(teamNumbers.map((team_number) => ({ event_id: event.id, team_id: teamIdByNumber.get(team_number)! })), { onConflict: "event_id,team_id" });
+  if (linkError) throw new Error("Could not link the official team roster to the live event.");
+  return { teamIdByNumber, addedTeamCount: missingNumbers.length };
+}
+
+export async function syncLiveEvent(eventId: string, organizationId: string): Promise<LiveSyncResult> {
   const database: any = createAdminClient();
   const { data: event, error: eventError } = await database.from("events").select("id,event_key,tba_live_matches_etag").eq("id", eventId).eq("organization_id", organizationId).eq("status", "active").maybeSingle();
   if (eventError || !event) return { updated: false, skipped: true, message: "No active event is available." };
@@ -46,12 +77,9 @@ export async function syncLiveEvent(eventId: string, organizationId: string): Pr
   const parsed = z.array(matchSchema).safeParse(await response.json());
   if (!parsed.success) throw new Error("TBA returned an unexpected live match payload.");
 
-  const { data: teams, error: teamsError } = await database.from("teams").select("id,team_number").eq("organization_id", organizationId);
-  if (teamsError) throw new Error("Could not load the event team directory.");
-  const teamIdByNumber = new Map((teams ?? []).map((team: { id: string; team_number: number }) => [team.team_number, team.id]));
   const numberFromKey = (teamKey: string) => Number(teamKey.slice(3));
-  const missingTeam = parsed.data.flatMap((match) => [...match.alliances.red.team_keys, ...match.alliances.blue.team_keys]).map(numberFromKey).find((number) => !teamIdByNumber.has(number));
-  if (missingTeam) throw new Error(`TBA references team ${missingTeam}, which has not been imported for this organization.`);
+  const teamNumbers = [...new Set(parsed.data.flatMap((match) => [...match.alliances.red.team_keys, ...match.alliances.blue.team_keys]).map(numberFromKey))];
+  const { teamIdByNumber, addedTeamCount } = await ensureLiveEventRoster(database, event, organizationId, key, teamNumbers);
 
   const rows = parsed.data.map((match) => ({
     event_id: event.id,
@@ -72,5 +100,17 @@ export async function syncLiveEvent(eventId: string, organizationId: string): Pr
     if (error) throw new Error("Could not save live match results.");
   }
   await database.from("events").update({ tba_live_matches_etag: response.headers.get("etag"), tba_last_live_synced_at: now.toISOString() }).eq("id", event.id);
-  return { updated: true, message: `Updated ${rows.length} official matches.` };
+  return { updated: true, message: `Updated ${rows.length} official matches${addedTeamCount ? ` and added ${addedTeamCount} teams` : ""}.` };
+}
+
+/** Sync each organization’s active event for the protected production scheduler. */
+export async function syncAllActiveEvents(): Promise<ActiveEventSyncResult[]> {
+  const database: any = createAdminClient();
+  const { data: events, error } = await database.from("events").select("id,organization_id,event_key").eq("status", "active");
+  if (error) throw new Error("Could not load active events for live synchronization.");
+
+  return Promise.all((events ?? []).map(async (event: { id: string; organization_id: string; event_key: string }) => ({
+    eventKey: event.event_key,
+    ...(await syncLiveEvent(event.id, event.organization_id)),
+  })));
 }
