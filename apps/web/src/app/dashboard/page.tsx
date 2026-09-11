@@ -10,7 +10,9 @@ export default async function Dashboard() {
     ? await Promise.all([
       supabase.from("organizations").select("name").eq("id", viewer.organizationId).maybeSingle(),
       viewer.activeEvent ? supabase.from("scouting_entries").select("id", { count: "exact", head: true }).eq("event_id", viewer.activeEvent.id).eq("status", "submitted") : Promise.resolve({ count: 0 }),
-      supabase.from("scouting_assignments").select("id,status,assignment_type,matches(match_number),teams(team_number,name)").eq("scout_user_id", viewer.userId).neq("status", "complete").order("created_at", { ascending: false }).limit(5),
+      viewer.activeEvent
+        ? supabase.from("scouting_assignments").select("id,status,assignment_type,matches!inner(id,match_number,event_id),teams(team_number,name)").eq("scout_user_id", viewer.userId).eq("matches.event_id", viewer.activeEvent.id).neq("status", "complete").order("created_at", { ascending: false }).limit(5)
+        : Promise.resolve({ data: [] }),
     ])
     : [{ data: null }, { count: 0 }, { data: [] }];
   return <AppShell><PageHeader eyebrow={organization ? `${organization.name} · Competition workspace` : "Competition workspace"} title={organization ? "HAL9000 is ready." : "You’re almost ready."}/>
