@@ -1,6 +1,6 @@
 # Architecture
 
-Wildcard Pulse has one durable submission format shared across all planned clients.
+HAL9000 has one durable submission format shared across all planned clients.
 
 ```
 Phase 1 web client ──┐

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     await supabase.auth.signOut();
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/auth/login";
-    loginUrl.searchParams.set("error", "Use your @stuypulse.com Google account to access Wildcard Pulse.");
+    loginUrl.searchParams.set("error", "Use your @stuypulse.com Google account to access HAL9000.");
     return NextResponse.redirect(loginUrl);
   }
   return response;

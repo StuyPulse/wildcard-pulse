@@ -1,9 +1,9 @@
-# wildcard-pulse — AGENTS.md
+# HAL9000 — AGENTS.md
 
-This repository is StuyPulse's (FRC Team 694) competition scouting platform, **wildcard-pulse**. It ships in three phases — an online-first web app, then offline support for that same web app, then a native mobile app with full offline + QR relay — all sharing one Supabase database and one submission format. Read the phase you're working in before writing code; do not pull forward work from a later phase into an earlier one (e.g. do not make QR/offline reliability a Phase 1 requirement), and do not make a Phase 1 decision that would force a data-model change later.
+This repository is StuyPulse's (FRC Team 694) competition scouting platform, **HAL9000**. It ships in three phases — an online-first web app, then offline support for that same web app, then a native mobile app with full offline + QR relay — all sharing one Supabase database and one submission format. Read the phase you're working in before writing code; do not pull forward work from a later phase into an earlier one (e.g. do not make QR/offline reliability a Phase 1 requirement), and do not make a Phase 1 decision that would force a data-model change later.
 
-- **GitHub:** `wildcard-pulse`
-- **Supabase project:** `wildcard`
+- **GitHub:** `hal9000`
+- **Supabase project:** `wildcard` (current hosted-project name)
 - **Web hosting:** Vercel
 
 ## Why this exists
@@ -203,7 +203,7 @@ Scout opens assigned match
 ### Repo structure
 
 ```
-wildcard-pulse/
+hal9000/
   apps/
     web/                 # Next.js application
   packages/

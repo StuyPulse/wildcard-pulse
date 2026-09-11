@@ -1,5 +1,5 @@
 {
-  "name": "wildcard-pulse",
+  "name": "hal9000",
   "private": true,
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {

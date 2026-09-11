@@ -25,7 +25,7 @@ export function LoginForm() {
   }
 
   return <form className="auth-form">
-    <div className="brand"><BrandLogo/><span>wildcard<small>STUYPULSE · 694</small></span></div>
+    <div className="brand"><BrandLogo/><span>HAL9000<small>STUYPULSE · 694</small></span></div>
     <h1>{isSignUp ? "Create your account." : "Welcome back."}</h1>
     <p>{isSignUp ? "Use your StuyPulse account to join the competition workspace." : <>Only <strong>@stuypulse.com</strong> accounts can access this competition workspace.</>}</p>
     <button type="button" className="button secondary auth-google" onClick={signInWithGoogle} disabled={pending}><GoogleMark/>Continue with Google</button>
@@ -37,7 +37,7 @@ export function LoginForm() {
     {callbackError && <p className="error">{callbackError}</p>}{state.error && <p className="error">{state.error}</p>}{state.message && <p className="trend">{state.message}</p>}
     <button className="button" formAction={isSignUp ? signupAction : loginAction} disabled={pending}>{isSignUp ? pendingSignup ? "Creating account…" : "Create account" : pendingLogin ? "Signing in…" : "Sign in"}</button>
     {!isSignUp && <button className="link auth-reset" formAction={resetAction} formNoValidate disabled={pending}>{pendingReset ? "Sending reset link…" : "Forgot password?"}</button>}
-    <p className="auth-switch">{isSignUp ? "Already have an account?" : "New to Pulse?"} <button type="button" onClick={() => setMode(isSignUp ? "sign-in" : "sign-up")}>{isSignUp ? "Sign in" : "Create an account"}</button></p>
+    <p className="auth-switch">{isSignUp ? "Already have an account?" : "New to HAL9000?"} <button type="button" onClick={() => setMode(isSignUp ? "sign-in" : "sign-up")}>{isSignUp ? "Sign in" : "Create an account"}</button></p>
     <p className="muted auth-legal"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>
   </form>;
 }

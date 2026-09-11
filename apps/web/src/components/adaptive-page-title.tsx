@@ -28,11 +28,11 @@ function pageName(pathname: string) {
   if (pathname.includes("/auth/reset-password")) return "Reset password";
   if (pathname === "/privacy") return "Privacy";
   if (pathname === "/terms") return "Terms";
-  return "Wildcard";
+  return "HAL9000";
 }
 
 export function AdaptivePageTitle() {
   const pathname = usePathname();
-  useEffect(() => { document.title = `${pageName(pathname)} | Wildcard`; }, [pathname]);
+  useEffect(() => { document.title = `${pageName(pathname)} | HAL9000`; }, [pathname]);
   return null;
 }

@@ -1,4 +1,4 @@
-# Wildcard Pulse
+# HAL9000
 
 StuyPulse 694's competition scouting platform. Phase 1 is an online-first Next.js app backed by Supabase; later phases add web offline support and a native QR-relay workflow without changing the submission format.
 
