@@ -422,7 +422,10 @@
   .summary-table th { @apply whitespace-nowrap bg-stuypulse-elevated px-2.5 pt-3; }
   .summary-table th button { @apply text-left font-bold text-stuypulse-textMuted hover:text-stuypulse-text; }
   .summary-table td { @apply whitespace-nowrap px-2.5 py-3 font-medium; }
-  .summary-table td.summary-team { @apply min-w-[150px] max-w-[210px] whitespace-normal font-extrabold; }
+  .summary-table th.summary-team, .summary-table td.summary-team { @apply sticky left-0 z-10 min-w-[88px] bg-stuypulse-surface; }
+  .summary-table th.summary-team { @apply z-20 bg-stuypulse-elevated; }
+  .summary-table td.summary-team { @apply font-extrabold; box-shadow:inset -1px 0 0 theme('colors.stuypulse.border'); }
+  .summary-team-link { @apply text-stuypulse-text underline decoration-stuypulse-red/60 underline-offset-4 hover:text-stuypulse-redHover; }
   .summary-table .summary-stat-cell { background-color:rgb(var(--summary-stat-color) / 0.18); }
   .summary-table tr:hover .summary-stat-cell { background-color:rgb(var(--summary-stat-color) / 0.28); }
   .summary-table .summary-rank-cell { font-family:'DM Mono',monospace; }
