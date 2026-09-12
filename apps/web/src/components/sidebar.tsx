@@ -18,7 +18,7 @@ function NavLink({ item, active, compact = false, onNavigate }: { item: NavItem;
 export function Sidebar({ active, canManage, eventHref }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const workspace: NavItem[] = [["Dashboard", "/dashboard", LayoutDashboard], ["Teams", `${eventHref}/teams`, Users], ["Summary", `${eventHref}/summary`, BarChart3], ["Matches", `${eventHref}/matches`, ClipboardList]];
+  const workspace: NavItem[] = [["Dashboard", "/dashboard", LayoutDashboard], ["Teams", `${eventHref}/teams`, Users], ["Summary", `${eventHref}/summary`, BarChart3], ["Schedule", `${eventHref}/matches`, ClipboardList]];
   const scout: NavItem[] = [["Scouting forms", "/scout/manual", ClipboardList], ["Submissions", "/submissions", BarChart3]];
   const strategy: NavItem[] = [["Match strategy", `${eventHref}/strategy`, Map], ["Picklist", `${eventHref}/picklist`, ListOrdered]];
   const admin: NavItem[] = [["Events", "/events", CalendarDays], ["Assignments", "/admin/assignments", Radio], ["Users & roles", "/admin/users", ShieldCheck], ["Form builder", "/admin/forms", Settings]];

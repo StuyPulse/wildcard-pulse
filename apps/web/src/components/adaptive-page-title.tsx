@@ -11,7 +11,7 @@ function pageName(pathname: string) {
   if (pathname.includes("/summary")) return "Scouting summary";
   if (pathname.includes("/teams/")) return "Team details";
   if (pathname.includes("/teams")) return "Teams";
-  if (pathname.includes("/matches")) return "Matches";
+  if (pathname.includes("/matches")) return "Schedule";
   if (pathname === "/scout/manual") return "Scouting forms";
   if (pathname === "/scout/assignments") return "My assignments";
   if (pathname.includes("/scout/match/manual")) return "Manual match scouting";

@@ -264,6 +264,38 @@ export async function setObjectiveAssignment(_: ActionState, formData: FormData)
   }
 }
 
+export async function setPrescoutAssignment(_: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    const input = z.object({
+      eventId: z.string().uuid(),
+      teamId: z.string().uuid(),
+      scoutUserId: z.union([z.literal(""), z.string().uuid()]),
+    }).safeParse({ eventId: formData.get("eventId"), teamId: formData.get("teamId"), scoutUserId: formData.get("scoutUserId") });
+    if (!input.success) return { error: "This prescout assignment could not be identified." };
+    const { organizationId } = await adminContext();
+    const database: any = createAdminClient();
+    const { data: event } = await database.from("events").select("id,event_key").eq("id", input.data.eventId).eq("organization_id", organizationId).maybeSingle();
+    if (!event) return { error: "This event is unavailable." };
+    const { data: eventTeam } = await database.from("event_teams").select("team_id").eq("event_id", event.id).eq("team_id", input.data.teamId).maybeSingle();
+    if (!eventTeam) return { error: "That team is not part of this event." };
+    if (input.data.scoutUserId) {
+      const { data: scout } = await database.from("organization_members").select("user_id").eq("organization_id", organizationId).eq("user_id", input.data.scoutUserId).eq("role", "scout").maybeSingle();
+      if (!scout) return { error: "Choose a Scout-role user from this organization." };
+      const { error } = await database.from("prescout_assignments").upsert({ organization_id: organizationId, event_id: event.id, team_id: input.data.teamId, scout_user_id: input.data.scoutUserId }, { onConflict: "event_id,team_id,scout_user_id" });
+      if (error) return { error: "Couldn’t save that prescout assignment." };
+    } else {
+      const { error } = await database.from("prescout_assignments").delete().eq("event_id", event.id).eq("team_id", input.data.teamId);
+      if (error) return { error: "Couldn’t clear those prescout assignments." };
+    }
+    revalidatePath("/admin/assignments");
+    revalidatePath("/scout/pre-scout");
+    revalidatePath(`/events/${event.event_key}/teams`);
+    return { success: input.data.scoutUserId ? "Scout added to this prescout team." : "Prescout assignments cleared." };
+  } catch {
+    return { error: "Admin access is required to manage prescout assignments." };
+  }
+}
+
 export async function publishDefaultForm(_: ActionState): Promise<ActionState> { try { const {supabase,organizationId}=await adminContext(); const {data:latest}=await supabase.from("form_definitions").select("version").eq("organization_id",organizationId).eq("name",DEFAULT_2026_FORM.title).order("version",{ascending:false}).limit(1).maybeSingle();const {error}=await supabase.from("form_definitions").insert({organization_id:organizationId,name:DEFAULT_2026_FORM.title,version:(latest?.version??0)+1,schema_json:DEFAULT_2026_FORM,is_active:true});return error?{error:"Couldn’t publish the form."}:{success:"New form version published."}; }catch{return{error:"Admin access is required."};} }
 
 export async function publishFormDefinition(_: ActionState, formData: FormData): Promise<ActionState> { try { const raw=String(formData.get("schema")??"");let json:unknown;try{json=JSON.parse(raw)}catch{return{error:"The form schema must be valid JSON."};}const form=formDefinitionSchema.safeParse(json);if(!form.success)return{error:"The schema needs a title, game year, and valid field definitions."};const {supabase,organizationId}=await adminContext();const {data:latest}=await supabase.from("form_definitions").select("version").eq("organization_id",organizationId).eq("name",form.data.title).order("version",{ascending:false}).limit(1).maybeSingle();const {error}=await supabase.from("form_definitions").insert({organization_id:organizationId,name:form.data.title,version:(latest?.version??0)+1,schema_json:form.data,is_active:true});return error?{error:"Couldn’t publish the form."}:{success:`Published ${form.data.title} v${(latest?.version??0)+1}.`};}catch{return{error:"Admin access is required."};} }
