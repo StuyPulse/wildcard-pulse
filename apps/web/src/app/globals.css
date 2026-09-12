@@ -423,10 +423,8 @@
   .summary-table th button { @apply text-left font-bold text-stuypulse-textMuted hover:text-stuypulse-text; }
   .summary-table td { @apply whitespace-nowrap px-2.5 py-3 font-medium; }
   .summary-table td.summary-team { @apply min-w-[150px] max-w-[210px] whitespace-normal font-extrabold; }
-  .summary-ranked-row { --summary-rank-hue: 0; }
-  .summary-table .summary-ranked-row td { background-color:hsl(var(--summary-rank-hue) 72% 48% / 0.075); }
-  .summary-table .summary-ranked-row td:first-child { box-shadow:inset 3px 0 0 hsl(var(--summary-rank-hue) 72% 48% / 0.8); }
-  .summary-table .summary-ranked-row:hover td { background-color:hsl(var(--summary-rank-hue) 72% 48% / 0.14); }
+  .summary-table .summary-stat-cell { background-color:rgb(var(--summary-stat-color) / 0.18); }
+  .summary-table tr:hover .summary-stat-cell { background-color:rgb(var(--summary-stat-color) / 0.28); }
   .summary-table .summary-rank-cell { font-family:'DM Mono',monospace; }
   .summary-mobile-list { display: none; }
   .summary-mobile-view-toggle, .summary-table-scroll-help { display: none; }
@@ -619,8 +617,6 @@
   .summary-table.summary-mobile-table-visible th:first-child { @apply bg-stuypulse-elevated; }
   .summary-table.summary-mobile-table-visible td:first-child { @apply bg-stuypulse-surface; }
   .summary-mobile-card { @apply block rounded-lg border border-stuypulse-border bg-stuypulse-bg p-3.5 transition-colors active:bg-stuypulse-elevated; }
-  .summary-mobile-card.summary-ranked-row { background-color:hsl(var(--summary-rank-hue) 72% 48% / 0.09); border-left-color:hsl(var(--summary-rank-hue) 72% 48% / 0.85); }
-  .summary-table.summary-mobile-table-visible .summary-ranked-row td:first-child { background-color:hsl(var(--summary-rank-hue) 72% 48% / 0.075); }
   .summary-mobile-heading { @apply mb-3 flex items-start justify-between gap-3; }
   .summary-mobile-heading > div { @apply flex min-w-0 items-baseline gap-2; }
   .summary-mobile-heading strong { @apply text-xl font-extrabold tracking-[-0.06em]; }
@@ -629,6 +625,7 @@
   .summary-mobile-metrics div { @apply flex min-w-0 flex-col gap-0.5; }
   .summary-mobile-metrics span { @apply truncate text-[10px] font-medium uppercase tracking-[0.07em] text-stuypulse-textMuted; font-family:'DM Mono',monospace; }
   .summary-mobile-metrics strong { @apply text-sm; font-family:'DM Mono',monospace; }
+  .summary-mobile-stat-cell { @apply -mx-1 rounded-md px-1.5 py-1; background-color:rgb(var(--summary-stat-color) / 0.16); }
   .summary-open { @apply mt-3 block text-xs font-bold text-stuypulse-redHover; }
   .summary-table table { @apply min-w-[720px]; }
   .pre-scout-table { @apply min-w-[1100px]; }
