@@ -1,5 +1,6 @@
 "use client";
 
+import { FlipHorizontal2 } from "lucide-react";
 import { useState, type CSSProperties } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -44,6 +45,7 @@ export function RebuiltMatchForm({ eventId, matchId, teamId, assignmentId, teamN
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [mirrored, setMirrored] = useState(false);
   const [entryId] = useState(() => {
     if (typeof window === "undefined") return "";
     const reportKey = assignmentId ?? (matchId ? `${matchId}:${teamId}` : `manual:${manualMatch?.stage ?? "other"}:${manualMatch?.label ?? ""}:${teamId}`);
@@ -56,6 +58,7 @@ export function RebuiltMatchForm({ eventId, matchId, teamId, assignmentId, teamN
 
   const disabled = noShow || saving || submitted;
   const total = (score: Score) => score.shoot + score.ferry;
+  const mapFlipped = (alliance === "blue") !== mirrored;
 
   async function save(finalize: boolean) {
     if (saving || !entryId) return;
@@ -93,9 +96,10 @@ export function RebuiltMatchForm({ eventId, matchId, teamId, assignmentId, teamN
 
   return <section className="scouting-card match-form">
     <div className="form-intro"><div className="form-kicker">{manualMatch ? `Manual match report · ${manualMatch.stage}${manualMatch.label ? ` · ${manualMatch.label}` : ""}` : `Match scouting · ${alliance} alliance`}</div><h2>Team {teamNumber}</h2></div>
-      <div className="form-section"><div className="section-title">Auton starting position</div><button type="button" className="button secondary mobile-full" disabled={saving || submitted} aria-pressed={noShow} onClick={() => setNoShow(!noShow)}>{noShow ? "Undo no show" : "Mark no show"}</button><fieldset disabled={disabled}><legend className="sr-only">Autonomous starting position</legend><div className={`field-map ${alliance === "blue" ? "flipped" : "red-side"}`}><div className="field-map-art" aria-hidden="true"/>{spots.map((item) => <button type="button" key={item.id} aria-label={`Start at ${item.label}`} aria-pressed={spot === item.id} style={{"--spot-x":item.x,"--spot-y":item.y} as CSSProperties} className={spot === item.id ? `spot ${alliance}` : "spot"} onClick={() => setSpot((current) => current === item.id ? undefined : item.id)}><span>{item.label}</span></button>)}</div></fieldset><div className="spot-choice" aria-live="polite">{spot ? `Starting position: ${spots.find((item)=>item.id===spot)?.label}` : "Choose a starting position."}</div></div>
+    <div className="form-sticky-team"><div><span>Scouting team</span><strong>{teamNumber}</strong><small>{alliance} alliance</small></div><button type="button" className="button secondary" disabled={saving || submitted} aria-pressed={mirrored} onClick={() => setMirrored((current) => !current)}><FlipHorizontal2 size={16} aria-hidden="true"/>{mirrored ? "Use alliance view" : "Mirror field"}</button></div>
+      <div className="form-section"><div className="section-title">Auton starting position</div><button type="button" className="button secondary mobile-full" disabled={saving || submitted} aria-pressed={noShow} onClick={() => setNoShow(!noShow)}>{noShow ? "Undo no show" : "Mark no show"}</button><fieldset disabled={disabled}><legend className="sr-only">Autonomous starting position</legend><div className={`field-map ${mapFlipped ? "flipped" : "red-side"}`}><div className="field-map-art" aria-hidden="true"/>{spots.map((item) => <button type="button" key={item.id} aria-label={`Start at ${item.label}`} aria-pressed={spot === item.id} style={{"--spot-x":item.x,"--spot-y":item.y} as CSSProperties} className={spot === item.id ? `spot ${alliance}` : "spot"} onClick={() => setSpot((current) => current === item.id ? undefined : item.id)}><span>{item.label}</span></button>)}</div></fieldset><div className="spot-choice" aria-live="polite">{spot ? `Starting position: ${spots.find((item)=>item.id===spot)?.label}` : "Choose a starting position."}</div></div>
     <fieldset disabled={disabled}><legend className="sr-only">Match scouting details</legend>
-      <div className="form-section"><div className="section-title">Scoring</div><p className="muted">Track the two match periods only. Shoot and ferry stay separate; use ±10 for fast entry.</p><div className="scoring-table"><div className="scoring-head"><span>Period</span><span>Shoot</span><span>Ferry</span></div><ScoreRow label="Autonomous" value={auto} update={(key, value) => setAuto((score) => ({ ...score, [key]: Math.max(0, value) }))} autoRow /><ScoreRow label="Teleop" value={teleop} update={(key, value) => setTeleop((score) => ({ ...score, [key]: Math.max(0, value) }))} /></div></div>
+      <div className="form-section"><div className="section-title">Scoring</div><p className="muted">Track the two match periods only. Scored and ferried fuel stay separate; use ±10 for fast entry.</p><div className="scoring-table"><div className="scoring-head"><span>Period</span><span>Scored</span><span>Ferry</span></div><ScoreRow label="Autonomous" value={auto} update={(key, value) => setAuto((score) => ({ ...score, [key]: Math.max(0, value) }))} autoRow /><ScoreRow label="Teleop" value={teleop} update={(key, value) => setTeleop((score) => ({ ...score, [key]: Math.max(0, value) }))} /></div></div>
       <div className="form-section"><div className="section-title">Fouls</div><Counter label="Fouls" value={fouls} by={1} setValue={setFouls} showLabel={false} /></div>
       <div className="form-section"><div className="section-title">Defense</div><label className="option-toggle"><input type="checkbox" checked={defense} onChange={(event) => setDefense(event.target.checked)} /> Played defense</label>{defense && <><div className="field"><label htmlFor="defense-level">Defense level: {level} / 10</label><input id="defense-level" type="range" min="1" max="10" value={level} onChange={(event) => setLevel(Number(event.target.value))} /></div><p className="muted">Select the opposing robots this team defended. Only the three opponents are available.</p><div className="team-picker" aria-label="Opposing teams defended against">{otherTeams.map((team) => <button type="button" aria-pressed={defended.includes(team.id)} key={team.id} className={defended.includes(team.id) ? `team-pick ${team.alliance}` : "team-pick"} onClick={() => setDefended((current) => current.includes(team.id) ? current.filter((id) => id !== team.id) : current.length < 3 ? [...current, team.id] : current)}>{team.number}</button>)}</div></>}</div>
       <div className="form-section"><div className="section-title">Breakage · PulseCrew</div><label className="option-toggle"><input type="checkbox" checked={broke} onChange={(event) => setBroke(event.target.checked)} /> Robot broke / disabled</label>{broke && <div className="form-grid"><div className="field"><label htmlFor="break-timestamp">Timestamp (optional)</label><input id="break-timestamp" value={timestamp} onChange={(event) => setTimestamp(event.target.value)} placeholder="1:42" inputMode="numeric" /></div><div className="field"><label htmlFor="break-issue">Issue</label><select id="break-issue" value={tag} onChange={(event) => setTag(event.target.value)}><option value="">Choose an issue…</option>{tags.map((item) => <option key={item}>{item}</option>)}</select></div>{tag === "Other" && <div className="field"><label htmlFor="break-other">Describe the issue</label><input id="break-other" value={otherBreakIssue} onChange={(event) => setOtherBreakIssue(event.target.value)} placeholder="e.g. chain came off" /></div>}</div>}</div>
@@ -108,7 +112,7 @@ export function RebuiltMatchForm({ eventId, matchId, teamId, assignmentId, teamN
 }
 
 function ScoreRow({ label, value, update, autoRow }: { label: string; value: Score; update: (key: keyof Score, value: number) => void; autoRow?: boolean }) {
-  return <div className={`scoring-row ${autoRow ? "auto-row" : ""}`}><strong>{label}</strong><MiniCounter label="Shoot" value={value.shoot} setValue={(next) => update("shoot", next)} /><MiniCounter label="Ferry" value={value.ferry} setValue={(next) => update("ferry", next)} /></div>;
+  return <div className={`scoring-row ${autoRow ? "auto-row" : ""}`}><strong>{label}</strong><MiniCounter label="Scored" value={value.shoot} setValue={(next) => update("shoot", next)} /><MiniCounter label="Ferry" value={value.ferry} setValue={(next) => update("ferry", next)} /></div>;
 }
 
 function WholeNumberInput({ label, value, setValue }: { label: string; value: number; setValue: (value: number) => void }) {

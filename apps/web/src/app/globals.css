@@ -220,6 +220,11 @@
   .match-scout-grid { @apply grid grid-cols-2 items-start gap-5; }
   .match-scout-grid .scouting-card { @apply mx-0 w-full; }
   .scouting-card { @apply mx-auto grid max-w-5xl gap-5 rounded-panel border border-stuypulse-border bg-stuypulse-surface p-6 shadow-elevated; }
+  .form-sticky-team { @apply sticky top-3 z-20 -mx-2 flex items-center justify-between gap-3 rounded-lg border border-stuypulse-border bg-stuypulse-surface/95 px-3 py-2 shadow-elevated; backdrop-filter:blur(10px); }
+  .form-sticky-team > div { @apply flex min-w-0 items-baseline gap-2; }
+  .form-sticky-team span, .form-sticky-team small { @apply text-[10px] font-bold uppercase tracking-[0.08em] text-stuypulse-textMuted; font-family:'DM Mono',monospace; }
+  .form-sticky-team strong { @apply text-xl font-extrabold tracking-[-0.06em]; }
+  .form-sticky-team .button { @apply min-h-9 shrink-0 px-3 py-1.5 text-xs; }
   .form-grid > *, .scoring-row > * { min-width: 0; }
   .form-intro { @apply border-b border-stuypulse-border pb-5; }
   .form-intro h2 { @apply mt-2 text-2xl; }
@@ -537,6 +542,9 @@
   .form-launcher { @apply grid-cols-1 gap-3; }
   .form-launch { @apply min-h-32 p-4; }
   .scouting-card { @apply gap-4 rounded-none border-x-0 p-4 shadow-none; }
+  .form-sticky-team { @apply top-2 -mx-1; }
+  .form-sticky-team small { @apply hidden; }
+  .form-sticky-team .button { @apply min-h-10 px-2.5; }
   .form-intro { @apply pb-4; }
   .form-intro h2 { @apply text-xl; }
   .form-section { @apply p-4; }
