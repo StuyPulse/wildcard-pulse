@@ -304,6 +304,21 @@
   .team-pit-report { @apply grid gap-3; }
   .team-pit-report + .team-pit-report { @apply border-t border-stuypulse-border pt-3; }
   .team-pit-report-head { @apply flex items-center justify-between gap-3 text-xs text-stuypulse-textMuted; }
+  .team-timeline-card { @apply max-w-6xl; }
+  .team-timeline-metrics { @apply mb-3 flex flex-wrap gap-2; }
+  .team-timeline-metrics button { @apply min-h-9 rounded-md border border-stuypulse-border bg-stuypulse-bg px-2.5 text-[11px] font-bold text-stuypulse-textMuted transition hover:bg-stuypulse-elevated hover:text-stuypulse-text; }
+  .team-timeline-metrics button.active { @apply border-stuypulse-red bg-stuypulse-red/15 text-stuypulse-text; }
+  .team-timeline-chart { @apply mb-5 h-[320px] rounded-lg border border-stuypulse-border bg-stuypulse-bg/60 p-3; }
+  .team-timeline-empty { @apply mb-5 rounded-lg border border-stuypulse-border bg-stuypulse-bg/60 p-4; }
+  .team-timeline-list { @apply overflow-hidden rounded-lg border border-stuypulse-border; }
+  .team-timeline-row { @apply grid grid-cols-[minmax(110px,.8fr)_minmax(92px,.65fr)_minmax(150px,1fr)_auto] items-center gap-3 border-b border-stuypulse-border bg-stuypulse-surface px-4 py-3 last:border-b-0; }
+  .team-timeline-row.scouted { box-shadow: inset 3px 0 0 theme('colors.stuypulse.success'); }
+  .team-timeline-row.missing { box-shadow: inset 3px 0 0 theme('colors.stuypulse.warning'); }
+  .team-timeline-match, .team-timeline-result, .team-timeline-coverage { @apply grid gap-0.5; }
+  .team-timeline-match strong, .team-timeline-result strong, .team-timeline-coverage strong { @apply text-xs; }
+  .team-timeline-match span, .team-timeline-result span, .team-timeline-coverage span { @apply text-[10px] font-medium text-stuypulse-textMuted; font-family:'DM Mono',monospace; }
+  .team-timeline-match span { @apply font-bold uppercase; }
+  .team-timeline-actions { @apply flex justify-end gap-3 text-nowrap; }
   .graph-picker { @apply mb-5 flex flex-wrap gap-2; }
   .graph-picker label { @apply flex min-h-10 items-center gap-2 rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3 text-xs font-bold text-stuypulse-textMuted; }
   .graph-picker input { @apply h-4 w-4 accent-stuypulse-red; }
@@ -549,6 +564,9 @@
   .team-overview-metrics > div { @apply px-0 odd:border-r odd:border-stuypulse-border odd:pr-3 even:pl-3; }
   .team-overview-metrics > div:nth-child(3) { @apply border-t border-stuypulse-border pt-4; }
   .team-overview-metrics > div:nth-child(4) { @apply border-t border-stuypulse-border pt-4; }
+  .team-timeline-chart { @apply h-[260px] p-2; }
+  .team-timeline-row { @apply grid-cols-2 gap-x-3 gap-y-2 px-3 py-3; }
+  .team-timeline-actions { @apply col-span-2 justify-start border-t border-stuypulse-border pt-2; }
   .graph-row { @apply grid-cols-1 gap-2; }
   .graph-row > strong { @apply pt-0; }
   .graph-bar-wrap { @apply grid-cols-[minmax(48px,1fr)_56px]; }

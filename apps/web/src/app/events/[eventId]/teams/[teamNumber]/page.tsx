@@ -6,14 +6,19 @@ import { createClient } from "@/lib/supabase/server";
 import { calculateScoutStats, formatStat } from "@/lib/scouting-stats";
 import { LocalDateTime } from "@/components/local-date-time";
 import { PayloadGrid } from "@/components/scouting-payload";
+import { TeamMatchTimeline, type TimelineMatch } from "./team-match-timeline";
 
-type TbaMatch = { key: string; match_number: number; actual_time?: number; alliances?: { red?: { team_keys?: string[]; score?: number }; blue?: { team_keys?: string[]; score?: number } } };
+type TbaMatch = { key: string; match_number: number; comp_level?: string; actual_time?: number; alliances?: { red?: { team_keys?: string[]; score?: number }; blue?: { team_keys?: string[]; score?: number } } };
+type LocalMatch = { id: string; match_number: number; match_type: string; scheduled_at: string | null; red_teams: string[]; blue_teams: string[]; red_score: number | null; blue_score: number | null };
 
-function entryFuel(payload: Record<string, any> | null | undefined) {
-  const auto = Number(payload?.auto?.shoot ?? 0) + Number(payload?.auto?.ferry ?? 0);
-  const teleop = Number(payload?.teleop?.shoot ?? payload?.teleop_fuel ?? 0) + Number(payload?.teleop?.ferry ?? 0);
-  return auto + teleop || Number(payload?.auto_fuel ?? 0) + Number(payload?.teleop_fuel ?? 0);
+function entryBreakdown(payload: Record<string, any> | null | undefined) {
+  const auto = Number(payload?.auto?.shoot ?? 0) + Number(payload?.auto?.ferry ?? 0) || Number(payload?.auto_fuel ?? 0);
+  const teleop = Number(payload?.teleop?.shoot ?? payload?.teleop_fuel ?? 0) + Number(payload?.teleop?.ferry ?? 0) || Number(payload?.teleop_fuel ?? 0);
+  return { auto, teleop, total: auto + teleop, fouls: Number(payload?.fouls ?? 0), defense: Number(payload?.defense_level ?? 0), broken: payload?.robot_broke ? 1 : 0 };
 }
+const localMatchKey = (type: string, matchNumber: number) => `${type}:${matchNumber}`;
+const tbaMatchType = (match: TbaMatch) => match.comp_level === "qm" ? "qualification" : "playoff";
+const localMatchLabel = (match: LocalMatch) => match.match_type === "qualification" ? `Q${match.match_number}` : match.match_type === "practice" ? `Practice ${match.match_number}` : `Playoff ${match.match_number}`;
 
 export default async function TeamDetail({ params }: { params: Promise<{ eventId: string; teamNumber: string }> }) {
   const { eventId: eventKey, teamNumber } = await params;
@@ -28,9 +33,10 @@ export default async function TeamDetail({ params }: { params: Promise<{ eventId
   const team = ((eventTeams ?? []).map((row: any) => row.teams).find((candidate: any) => candidate?.team_number === number) ?? null) as { id: string; team_number: number; name: string } | null;
   if (!team) notFound();
 
-  const [{ data: entries }, { data: photos }] = await Promise.all([
-    (supabase as any).from("scouting_entries").select("id,entry_type,payload,status,submitted_at,created_at,matches(match_number),profiles(display_name)").eq("event_id", event.id).eq("team_id", team.id).order("created_at", { ascending: false }),
+  const [{ data: entries }, { data: photos }, { data: localMatches }] = await Promise.all([
+    (supabase as any).from("scouting_entries").select("id,entry_type,payload,status,submitted_at,created_at,matches(id,match_number,match_type),profiles(display_name)").eq("event_id", event.id).eq("team_id", team.id).order("created_at", { ascending: false }),
     (supabase as any).from("pit_photos").select("storage_path").eq("event_id", event.id).eq("team_id", team.id).order("created_at", { ascending: false }),
+    (supabase as any).from("matches").select("id,match_number,match_type,scheduled_at,red_teams,blue_teams,red_score,blue_score").eq("event_id", event.id).order("scheduled_at"),
   ]);
 
   const photoUrls = (await Promise.all((photos ?? []).map(async (photo: any) => {
@@ -38,8 +44,13 @@ export default async function TeamDetail({ params }: { params: Promise<{ eventId
     return data?.signedUrl;
   }))).filter(Boolean) as string[];
   const matchEntries = (entries ?? []).filter((entry: any) => entry.entry_type === "match");
+  const submittedEntries = matchEntries.filter((entry: any) => entry.status === "submitted");
   const byType = (type: string) => (entries ?? []).filter((entry: any) => entry.entry_type === type);
   const stats = calculateScoutStats(matchEntries);
+  const teamMatches = ((localMatches ?? []) as LocalMatch[]).filter((match) => [...(match.red_teams ?? []), ...(match.blue_teams ?? [])].includes(team.id));
+  const localByKey = new Map(teamMatches.map((match) => [localMatchKey(match.match_type, match.match_number), match]));
+  const reportByMatchId = new Map<string, any>();
+  for (const entry of submittedEntries) if (entry.matches?.id && !reportByMatchId.has(entry.matches.id)) reportByMatchId.set(entry.matches.id, entry);
 
   let tbaMatches: TbaMatch[] = [];
   let tba: any = null;
@@ -60,6 +71,16 @@ export default async function TeamDetail({ params }: { params: Promise<{ eventId
     opr = Number(oprsJson?.oprs?.[`frc${team.team_number}`] ?? 0);
   } catch {}
 
+  const toTimeline = (match: LocalMatch, official?: TbaMatch): TimelineMatch => {
+    const red = official ? official.alliances?.red?.team_keys?.includes(`frc${team.team_number}`) : match.red_teams.includes(team.id);
+    const ours = official ? (red ? official.alliances?.red?.score : official.alliances?.blue?.score) : (red ? match.red_score : match.blue_score);
+    const theirs = official ? (red ? official.alliances?.blue?.score : official.alliances?.red?.score) : (red ? match.blue_score : match.red_score);
+    const outcome = typeof ours === "number" && typeof theirs === "number" ? ours > theirs ? "win" : ours < theirs ? "loss" : "tie" : "pending";
+    const report = reportByMatchId.get(match.id); const values = report ? entryBreakdown(report.payload) : null;
+    return { id: official?.key ?? match.id, label: official ? (official.comp_level === "qm" ? `Q${official.match_number}` : `Playoff ${official.match_number}`) : localMatchLabel(match), alliance: red ? "red" : "blue", outcome, score: typeof ours === "number" && typeof theirs === "number" ? `${ours} – ${theirs}` : "Not played", tbaUrl: official ? `https://www.thebluealliance.com/match/${official.key}` : undefined, reportUrl: report ? `/submissions/${report.id}` : undefined, hasScout: Boolean(report), totalFuel: values?.total ?? null, autoFuel: values?.auto ?? null, teleopFuel: values?.teleop ?? null, fouls: values?.fouls ?? null, defense: values?.defense ?? null, broken: values?.broken ?? null };
+  };
+  const officialTimeline = tbaMatches.map((match) => { const local = localByKey.get(localMatchKey(tbaMatchType(match), match.match_number)); return local ? toTimeline(local, match) : null; }).filter(Boolean) as TimelineMatch[];
+  const timeline = officialTimeline.length ? officialTimeline : teamMatches.map((match) => toTimeline(match));
   const preScoutCount = byType("pre_scout").length;
   const pitEntries = byType("pit");
   const pitCount = pitEntries.length;
@@ -72,7 +93,7 @@ export default async function TeamDetail({ params }: { params: Promise<{ eventId
   ];
 
   return <AppShell active="Teams">
-    <LiveRefresh tables={["scouting_entries", "pit_photos"]} eventId={event.id} />
+    <LiveRefresh tables={["scouting_entries", "pit_photos", "matches"]} eventId={event.id} />
     <PageHeader eyebrow={event.name} title={`${team.team_number} · ${team.name}`} />
 
     {photoUrls.length > 0 && <section className="card section"><h2>Pit photos</h2><div className="pit-photo-grid">{photoUrls.map((url, index) => <img key={url} src={url} alt={`${team.team_number} pit photo ${index + 1}`} />)}</div></section>}
@@ -82,10 +103,8 @@ export default async function TeamDetail({ params }: { params: Promise<{ eventId
       <div className="team-overview-metrics">{overview.map((item) => <div key={item.label}><span>{item.label}</span><strong>{item.value}</strong><small>{item.detail}</small></div>)}</div>
     </section>
 
-    <section className="page-grid section">
-      <div className="card"><h2>Scouting coverage</h2><div className="coverage-list">{pitEntries.length ? <details className="team-pit-details"><summary><strong>Pit scouting</strong><span>{pitCount} report{pitCount === 1 ? "" : "s"} available</span></summary><div className="team-pit-reports">{pitEntries.map((entry: any) => <section key={entry.id} className="team-pit-report"><div className="team-pit-report-head"><span>{entry.profiles?.display_name ?? "Scout"} · {entry.submitted_at ? <LocalDateTime value={entry.submitted_at}/> : "Draft"}</span><Link className="link" href={`/submissions/${entry.id}`}>Open report →</Link></div><PayloadGrid payload={entry.payload ?? {}} compact teamNames={teamNames}/></section>)}</div></details> : <div><strong>Pit scouting</strong><span>Not scouted yet</span></div>}<div><strong>Pre-scouting</strong><span>{preScoutCount ? `${preScoutCount} report${preScoutCount === 1 ? "" : "s"} available` : "Not scouted yet"}</span></div><div><strong>Pit photos</strong><span>{photoUrls.length ? `${photoUrls.length} photo${photoUrls.length === 1 ? "" : "s"} available` : "No photos yet"}</span></div></div><Link className="link" href="/scout/manual">Open scouting forms →</Link></div>
-      <div className="card"><h2>Match history</h2><details><summary>Official TBA results ({tbaMatches.length})</summary>{tbaMatches.length ? tbaMatches.map((match) => { const red = match.alliances?.red?.team_keys?.includes(`frc${team.team_number}`); const ours = red ? match.alliances?.red?.score : match.alliances?.blue?.score; const theirs = red ? match.alliances?.blue?.score : match.alliances?.red?.score; return <div className="list-row" key={match.key}><div><strong>Qualification {match.match_number}</strong><div className="muted">{match.actual_time ? <LocalDateTime value={match.actual_time * 1000}/> : "Not played yet"}</div></div><span className="score">{ours ?? "—"} – {theirs ?? "—"}</span></div>; }) : <p className="muted">TBA has not published match results for this event yet.</p>}</details><details className="history-details"><summary>Scout reports ({matchEntries.length})</summary>{matchEntries.length ? matchEntries.map((entry: any) => <Link className="list-row" key={entry.id} href={`/submissions/${entry.id}`}><div><strong>Qualification {entry.matches?.match_number ?? "—"}</strong><div className="muted">{entry.profiles?.display_name ?? "Scout"} · {entry.submitted_at ? <LocalDateTime value={entry.submitted_at}/> : "Draft"}</div></div><span className="score">{formatStat(entryFuel(entry.payload))} fuel</span></Link>) : <p className="muted">No submitted scout reports yet.</p>}</details></div>
-    </section>
+    <div className="section"><TeamMatchTimeline matches={timeline}/></div>
+    <section className="card section"><div><h2>Research coverage</h2><div className="coverage-list">{pitEntries.length ? <details className="team-pit-details"><summary><strong>Pit scouting</strong><span>{pitCount} report{pitCount === 1 ? "" : "s"} available</span></summary><div className="team-pit-reports">{pitEntries.map((entry: any) => <section key={entry.id} className="team-pit-report"><div className="team-pit-report-head"><span>{entry.profiles?.display_name ?? "Scout"} · {entry.submitted_at ? <LocalDateTime value={entry.submitted_at}/> : "Draft"}</span><Link className="link" href={`/submissions/${entry.id}`}>Open report →</Link></div><PayloadGrid payload={entry.payload ?? {}} compact teamNames={teamNames}/></section>)}</div></details> : <div><strong>Pit scouting</strong><span>Not scouted yet</span></div>}<div><strong>Pre-scouting</strong><span>{preScoutCount ? `${preScoutCount} report${preScoutCount === 1 ? "" : "s"} available` : "Not scouted yet"}</span></div><div><strong>Pit photos</strong><span>{photoUrls.length ? `${photoUrls.length} photo${photoUrls.length === 1 ? "" : "s"} available` : "No photos yet"}</span></div></div><Link className="link" href="/scout/manual">Open scouting forms →</Link></div></section>
 
   </AppShell>;
 }
