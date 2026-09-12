@@ -251,6 +251,22 @@
   .practice-setup { @apply mb-4 rounded-lg border border-stuypulse-border bg-stuypulse-bg p-4; }
   .practice-setup summary { @apply cursor-pointer text-sm font-bold; }
   .practice-match-form { @apply mt-3 grid grid-cols-[120px_minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-3; }
+  .manual-event-setup { @apply mb-4; }
+  .manual-event-section { @apply mt-5 border-t border-stuypulse-border pt-5; }
+  .manual-event-section h3 { @apply text-base font-extrabold; }
+  .manual-team-form, .manual-match-form { @apply mt-3 grid items-end gap-3; }
+  .manual-team-form { @apply grid-cols-[130px_minmax(0,1fr)_auto]; }
+  .manual-match-form { @apply grid-cols-[100px_150px_minmax(180px,1fr)_minmax(170px,1fr)_minmax(170px,1fr)_auto]; }
+  .manual-team-form label, .manual-match-form label { @apply grid gap-1 text-[10px] font-bold uppercase tracking-[0.08em] text-stuypulse-textMuted; font-family:'DM Mono',monospace; }
+  .manual-team-form input, .manual-match-form input, .manual-match-form select { @apply min-h-10 rounded-md border border-stuypulse-border bg-stuypulse-surface px-2 text-sm text-stuypulse-text; font-family:Manrope,sans-serif; }
+  .manual-team-list { @apply mt-3 grid gap-1; }
+  .manual-team-row { @apply flex items-center gap-3 rounded-md border border-stuypulse-border bg-stuypulse-bg/50 px-3 py-2 text-sm; }
+  .manual-team-row > span:first-child { @apply flex-1; }
+  .manual-team-row .button { @apply min-h-8 px-2 text-xs; }
+  .manual-match-list { @apply mt-4 flex flex-wrap gap-2; }
+  .manual-match-list button { @apply grid rounded-md border border-stuypulse-border bg-stuypulse-bg px-3 py-2 text-left text-xs transition hover:border-stuypulse-red; }
+  .manual-match-list button.active { @apply border-stuypulse-red bg-stuypulse-red/10; }
+  .manual-match-list button span { @apply text-stuypulse-textMuted; }
   .schedule-filters select { @apply w-full rounded-lg border border-stuypulse-border bg-stuypulse-bg px-3 py-2 text-sm text-stuypulse-text; }
   .searchable-team-select { @apply relative min-w-0; }
   .searchable-team-input { @apply flex min-h-11 overflow-hidden rounded-lg border border-stuypulse-border bg-stuypulse-bg; }
@@ -583,6 +599,9 @@
   .global-document-frame { @apply h-[58dvh]; }
   .practice-match-form { @apply grid-cols-1; }
   .practice-match-form .button { @apply w-full; }
+  .manual-team-form, .manual-match-form { @apply grid-cols-1; }
+  .manual-team-form .button, .manual-match-form .button { @apply w-full; }
+  .manual-team-row { @apply flex-wrap; }
   .submission-detail-grid { @apply grid-cols-1; }
   .auto-path-preview { @apply aspect-[1380/674]; }
   .submission-meta { @apply gap-x-3 gap-y-1.5 text-[9px]; }

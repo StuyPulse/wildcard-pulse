@@ -21,7 +21,7 @@ export default async function TeamDetail({ params }: { params: Promise<{ eventId
   if (!Number.isSafeInteger(number) || number < 1) notFound();
 
   const supabase = await createClient();
-  const { data: event } = await supabase.from("events").select("id,event_key,name").eq("event_key", eventKey).maybeSingle();
+  const { data: event } = await supabase.from("events").select("id,event_key,name,is_manual").eq("event_key", eventKey).maybeSingle();
   if (!event) notFound();
 
   const { data: eventTeams } = await supabase.from("event_teams").select("team_id,teams(id,team_number,name)").eq("event_id", event.id);
@@ -44,7 +44,7 @@ export default async function TeamDetail({ params }: { params: Promise<{ eventId
   let tbaMatches: TbaMatch[] = [];
   let tba: any = null;
   let opr = 0;
-  if (process.env.TBA_AUTH_KEY) try {
+  if (!event.is_manual && process.env.TBA_AUTH_KEY) try {
     const headers = { "X-TBA-Auth-Key": process.env.TBA_AUTH_KEY };
     const [matchesResponse, rankingsResponse, oprsResponse] = await Promise.all([
       fetch(`https://www.thebluealliance.com/api/v3/event/${event.event_key}/matches`, { headers, cache: "no-store" }),
@@ -78,7 +78,7 @@ export default async function TeamDetail({ params }: { params: Promise<{ eventId
     {photoUrls.length > 0 && <section className="card section"><h2>Pit photos</h2><div className="pit-photo-grid">{photoUrls.map((url, index) => <img key={url} src={url} alt={`${team.team_number} pit photo ${index + 1}`} />)}</div></section>}
 
     <section className="card team-overview">
-      <div className="team-overview-link"><Link className="link" href={`https://www.thebluealliance.com/team/${team.team_number}`} target="_blank">Open TBA →</Link></div>
+      {!event.is_manual && <div className="team-overview-link"><Link className="link" href={`https://www.thebluealliance.com/team/${team.team_number}`} target="_blank">Open TBA →</Link></div>}
       <div className="team-overview-metrics">{overview.map((item) => <div key={item.label}><span>{item.label}</span><strong>{item.value}</strong><small>{item.detail}</small></div>)}</div>
     </section>
 

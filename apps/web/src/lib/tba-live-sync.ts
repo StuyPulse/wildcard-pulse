@@ -54,8 +54,9 @@ async function ensureLiveEventRoster(database: any, event: { id: string; event_k
 
 export async function syncLiveEvent(eventId: string, organizationId: string): Promise<LiveSyncResult> {
   const database: any = createAdminClient();
-  const { data: event, error: eventError } = await database.from("events").select("id,event_key,tba_live_matches_etag").eq("id", eventId).eq("organization_id", organizationId).eq("status", "active").maybeSingle();
+  const { data: event, error: eventError } = await database.from("events").select("id,event_key,is_manual,tba_live_matches_etag").eq("id", eventId).eq("organization_id", organizationId).eq("status", "active").maybeSingle();
   if (eventError || !event) return { updated: false, skipped: true, message: "No active event is available." };
+  if (event.is_manual) return { updated: false, skipped: true, message: "Manual events do not sync with TBA." };
 
   const now = new Date();
   const staleBefore = new Date(now.getTime() - intervalMs).toISOString();
@@ -106,7 +107,7 @@ export async function syncLiveEvent(eventId: string, organizationId: string): Pr
 /** Sync each organization’s active event for the protected production scheduler. */
 export async function syncAllActiveEvents(): Promise<ActiveEventSyncResult[]> {
   const database: any = createAdminClient();
-  const { data: events, error } = await database.from("events").select("id,organization_id,event_key").eq("status", "active");
+  const { data: events, error } = await database.from("events").select("id,organization_id,event_key").eq("status", "active").eq("is_manual", false);
   if (error) throw new Error("Could not load active events for live synchronization.");
 
   return Promise.all((events ?? []).map(async (event: { id: string; organization_id: string; event_key: string }) => ({

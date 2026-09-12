@@ -24,7 +24,7 @@ function officialClimb(matches: any[], teamId: string) {
 }
 export default async function ComparePage({ params, searchParams }: { params: Promise<{ eventId: string }>; searchParams: Promise<{ a?: string; b?: string }> }) {
   const { eventId: eventKey } = await params; const { a, b } = await searchParams; const supabase = await createClient();
-  const { data: event } = await supabase.from("events").select("id,name,event_key").eq("event_key", eventKey).maybeSingle();
+  const { data: event } = await supabase.from("events").select("id,name,event_key,is_manual").eq("event_key", eventKey).maybeSingle();
   const { data: rows } = event ? await supabase.from("event_teams").select("team_id,teams(team_number,name)").eq("event_id", event.id) : { data: [] };
   const teamRows = (rows ?? []).sort((first: any, second: any) => first.teams?.team_number - second.teams?.team_number);
   const pick = (id?: string) => teamRows.find((row: any) => String(row.teams?.team_number) === id) as any;
@@ -42,7 +42,7 @@ export default async function ComparePage({ params, searchParams }: { params: Pr
   }))).filter((item): item is readonly [string, string] => Boolean(item[1])));
 
   let rankings: any[] = []; let sortInfo: any[] = []; let oprs: Record<string, number> = {};
-  if (event && selectedTeamIds.length && process.env.TBA_AUTH_KEY) try {
+  if (event && !event.is_manual && selectedTeamIds.length && process.env.TBA_AUTH_KEY) try {
     const headers = { "X-TBA-Auth-Key": process.env.TBA_AUTH_KEY };
     const [rankingsResponse, oprsResponse] = await Promise.all([fetch(`https://www.thebluealliance.com/api/v3/event/${event.event_key}/rankings`, { headers, next: { revalidate: 20 } }), fetch(`https://www.thebluealliance.com/api/v3/event/${event.event_key}/oprs`, { headers, next: { revalidate: 20 } })]);
     const [rankingPayload, oprPayload] = await Promise.all([rankingsResponse.json(), oprsResponse.json()]);

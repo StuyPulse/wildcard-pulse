@@ -10,10 +10,10 @@ export default async function PicklistPage({ params }: { params: Promise<{ event
   const [viewer, supabase] = await Promise.all([getViewerContext(), createClient()]);
   if (!viewer?.organizationId) redirect("/dashboard");
   const canEdit = viewer.role === "strategist" || viewer.role === "master" || viewerCanManage(viewer);
-  const { data: event } = await supabase.from("events").select("id,name,event_key").eq("event_key", eventKey).eq("organization_id", viewer.organizationId).maybeSingle();
+  const { data: event } = await supabase.from("events").select("id,name,event_key,is_manual").eq("event_key", eventKey).eq("organization_id", viewer.organizationId).maybeSingle();
   if (!event) notFound();
   let oprs: Record<string, number> = {};
-  if (process.env.TBA_AUTH_KEY) try {
+  if (!event.is_manual && process.env.TBA_AUTH_KEY) try {
     const response = await fetch(`https://www.thebluealliance.com/api/v3/event/${event.event_key}/oprs`, {
       headers: { "X-TBA-Auth-Key": process.env.TBA_AUTH_KEY },
       next: { revalidate: 60 },

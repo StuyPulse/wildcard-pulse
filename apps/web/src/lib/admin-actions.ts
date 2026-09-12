@@ -39,8 +39,113 @@ export async function createPracticeMatch(_: ActionState, formData: FormData): P
   } catch { return { error: "Admin access is required to add a practice match." }; }
 }
 
+const manualEventSchema = z.object({ name: z.string().trim().min(3).max(160), startsAt: z.string().date(), endsAt: z.string().date().optional() }).refine((input) => !input.endsAt || input.endsAt >= input.startsAt, { message: "The end date must not be before the event date." });
+const manualMatchSchema = z.object({ eventId: z.string().uuid(), matchId: z.union([z.literal(""), z.string().uuid()]), matchNumber: z.coerce.number().int().positive(), matchType: z.enum(["qualification", "playoff", "practice"]), redTeams: z.string(), blueTeams: z.string(), scheduledAt: z.string().optional() });
+
+function manualEventKey() { return `manual_${randomUUID().replaceAll("-", "")}`; }
+function parseAllianceTeams(value: string) { return [...new Set(value.split(/[\s,]+/).filter(Boolean).map(Number))]; }
+
+async function manualEventContext(eventId: string) {
+  const { organizationId } = await adminContext();
+  const database: any = createAdminClient();
+  const { data: event } = await database.from("events").select("id,event_key,is_manual").eq("id", eventId).eq("organization_id", organizationId).maybeSingle();
+  if (!event?.is_manual) throw new Error("Manual event access required.");
+  return { database, organizationId, event };
+}
+
+async function ensureManualEventTeams(database: any, organizationId: string, eventId: string, teamNumbers: number[]) {
+  const unique = [...new Set(teamNumbers)];
+  const { data: existing, error: existingError } = await database.from("teams").select("id,team_number").eq("organization_id", organizationId).in("team_number", unique);
+  if (existingError) throw new Error("Could not load the team directory.");
+  const ids = new Map((existing ?? []).map((team: any) => [team.team_number, team.id]));
+  const missing = unique.filter((number) => !ids.has(number));
+  if (missing.length) {
+    const { error } = await database.from("teams").insert(missing.map((team_number) => ({ organization_id: organizationId, team_number, name: `Team ${team_number}` })));
+    if (error) throw new Error("Could not save the new teams.");
+    const { data: added, error: addedError } = await database.from("teams").select("id,team_number").eq("organization_id", organizationId).in("team_number", missing);
+    if (addedError) throw new Error("Could not reload the new teams.");
+    (added ?? []).forEach((team: any) => ids.set(team.team_number, team.id));
+  }
+  const { error: linkError } = await database.from("event_teams").upsert(unique.map((number) => ({ event_id: eventId, team_id: ids.get(number)! })), { onConflict: "event_id,team_id" });
+  if (linkError) throw new Error("Could not add teams to this event.");
+  return ids;
+}
+
 export async function createEvent(_: ActionState, formData: FormData): Promise<ActionState> {
-  try { const input=z.object({name:z.string().trim().min(3).max(160),eventKey:z.string().trim().regex(/^[0-9]{4}[a-z0-9_]+$/),startsAt:z.string().optional(),endsAt:z.string().optional()}).safeParse({name:formData.get("name"),eventKey:formData.get("eventKey"),startsAt:formData.get("startsAt")||undefined,endsAt:formData.get("endsAt")||undefined}); if(!input.success)return{error:"Use a valid TBA event key, such as 2026nytr."}; const {supabase,organizationId}=await adminContext();const {error}=await supabase.from("events").insert({organization_id:organizationId,name:input.data.name,event_key:input.data.eventKey,starts_at:input.data.startsAt||null,ends_at:input.data.endsAt||null,status:"upcoming"});return error?{error:"Couldn’t create the event."}:{success:"Event created."}; } catch { return {error:"Admin access is required."}; }
+  try {
+    const parsed = manualEventSchema.safeParse({ name: formData.get("name"), startsAt: formData.get("startsAt"), endsAt: formData.get("endsAt") || undefined });
+    if (!parsed.success) return { error: "Enter an event name and valid date range." };
+    const { organizationId } = await adminContext();
+    const database: any = createAdminClient();
+    const { data: event, error } = await database.from("events").insert({ organization_id: organizationId, name: parsed.data.name, event_key: manualEventKey(), starts_at: `${parsed.data.startsAt}T00:00:00Z`, ends_at: `${parsed.data.endsAt ?? parsed.data.startsAt}T23:59:59Z`, status: "upcoming", is_manual: true }).select("event_key").single();
+    if (error || !event) return { error: "Couldn’t create the manual event." };
+    revalidatePath("/events");
+    return { success: "Manual event created. Add its teams and matches next." };
+  } catch { return { error: "Admin access is required." }; }
+}
+
+export async function addManualEventTeam(_: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    const parsed = z.object({ eventId: z.string().uuid(), teamNumber: z.coerce.number().int().positive().max(99999), name: z.string().trim().min(1).max(160) }).safeParse({ eventId: formData.get("eventId"), teamNumber: formData.get("teamNumber"), name: formData.get("name") });
+    if (!parsed.success) return { error: "Enter a positive team number and a team name." };
+    const { database, organizationId, event } = await manualEventContext(parsed.data.eventId);
+    const { error: teamError } = await database.from("teams").upsert({ organization_id: organizationId, team_number: parsed.data.teamNumber, name: parsed.data.name }, { onConflict: "organization_id,team_number" });
+    if (teamError) return { error: "Couldn’t save that team." };
+    const { data: team, error: teamLookupError } = await database.from("teams").select("id").eq("organization_id", organizationId).eq("team_number", parsed.data.teamNumber).single();
+    if (teamLookupError || !team) return { error: "Couldn’t find that team after saving it." };
+    const { error: linkError } = await database.from("event_teams").upsert({ event_id: event.id, team_id: team.id }, { onConflict: "event_id,team_id" });
+    if (linkError) return { error: "Couldn’t add that team to the event." };
+    revalidatePath(`/events/${event.event_key}/matches`); revalidatePath(`/events/${event.event_key}/teams`);
+    return { success: `Team ${parsed.data.teamNumber} is ready for this event.` };
+  } catch { return { error: "Manual-event admin access is required." }; }
+}
+
+export async function removeManualEventTeam(_: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    const parsed = z.object({ eventId: z.string().uuid(), teamId: z.string().uuid() }).safeParse({ eventId: formData.get("eventId"), teamId: formData.get("teamId") });
+    if (!parsed.success) return { error: "This team could not be identified." };
+    const { database, event } = await manualEventContext(parsed.data.eventId);
+    const { data: matches, error: matchesError } = await database.from("matches").select("red_teams,blue_teams").eq("event_id", event.id);
+    if (matchesError) return { error: "Couldn’t check this team’s matches." };
+    if (matches?.some((match: any) => [...match.red_teams, ...match.blue_teams].includes(parsed.data.teamId))) return { error: "Edit or remove this team from its matches before removing it from the event." };
+    const { error } = await database.from("event_teams").delete().eq("event_id", event.id).eq("team_id", parsed.data.teamId);
+    if (error) return { error: "Couldn’t remove that team." };
+    revalidatePath(`/events/${event.event_key}/matches`); revalidatePath(`/events/${event.event_key}/teams`);
+    return { success: "Team removed from this event." };
+  } catch { return { error: "Manual-event admin access is required." }; }
+}
+
+export async function saveManualMatch(_: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    const parsed = manualMatchSchema.safeParse({ eventId: formData.get("eventId"), matchId: formData.get("matchId") || "", matchNumber: formData.get("matchNumber"), matchType: formData.get("matchType"), redTeams: formData.get("redTeams"), blueTeams: formData.get("blueTeams"), scheduledAt: formData.get("scheduledAt") || undefined });
+    if (!parsed.success) return { error: "Enter a valid match number, type, and schedule." };
+    const red = parseAllianceTeams(parsed.data.redTeams), blue = parseAllianceTeams(parsed.data.blueTeams);
+    if (!red.length || !blue.length || red.length > 3 || blue.length > 3 || [...red, ...blue].some((number) => !Number.isInteger(number) || number <= 0) || red.some((number) => blue.includes(number))) return { error: "Enter one to three distinct positive team numbers for each alliance." };
+    const { database, organizationId, event } = await manualEventContext(parsed.data.eventId);
+    const teams = await ensureManualEventTeams(database, organizationId, event.id, [...red, ...blue]);
+    const match = { event_id: event.id, match_number: parsed.data.matchNumber, match_type: parsed.data.matchType, red_teams: red.map((number) => teams.get(number)!), blue_teams: blue.map((number) => teams.get(number)!), scheduled_at: parsed.data.scheduledAt ? new Date(parsed.data.scheduledAt).toISOString() : null, status: "scheduled" };
+    const { error } = parsed.data.matchId
+      ? await database.from("matches").update(match).eq("id", parsed.data.matchId).eq("event_id", event.id)
+      : await database.from("matches").insert({ ...match, tba_match_key: `manual_${randomUUID()}` });
+    if (error) return { error: "Couldn’t save that match. Match numbers must be unique within each round type." };
+    revalidatePath(`/events/${event.event_key}/matches`); revalidatePath("/scout/match");
+    return { success: parsed.data.matchId ? "Match updated." : "Match added." };
+  } catch { return { error: "Manual-event admin access is required." }; }
+}
+
+export async function deleteManualMatch(_: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    const parsed = z.object({ eventId: z.string().uuid(), matchId: z.string().uuid() }).safeParse({ eventId: formData.get("eventId"), matchId: formData.get("matchId") });
+    if (!parsed.success) return { error: "This match could not be identified." };
+    const { database, event } = await manualEventContext(parsed.data.eventId);
+    const { data: submissions, error: submissionsError } = await database.from("match_submissions").select("id").eq("match_id", parsed.data.matchId).limit(1);
+    if (submissionsError) return { error: "Couldn’t check whether this match has submissions." };
+    if (submissions?.length) return { error: "This match has submissions, so it cannot be deleted." };
+    const { error } = await database.from("matches").delete().eq("id", parsed.data.matchId).eq("event_id", event.id);
+    if (error) return { error: "Couldn’t delete that match." };
+    revalidatePath(`/events/${event.event_key}/matches`); revalidatePath("/scout/match");
+    return { success: "Match deleted." };
+  } catch { return { error: "Manual-event admin access is required." }; }
 }
 
 export async function deleteEvent(_: ActionState, formData: FormData): Promise<ActionState> {
@@ -244,6 +349,7 @@ export async function importTbaEvent(_: ActionState, formData: FormData): Promis
         starts_at: `${event.data.start_date}T00:00:00Z`,
         ends_at: `${event.data.end_date}T23:59:59Z`,
         status: "upcoming",
+        is_manual: false,
       }, { onConflict: "organization_id,event_key" }).select("id").single();
       if (error || !savedEvent) return importDatabaseError("the event", error);
       eventId = savedEvent.id;
