@@ -12,20 +12,26 @@ export default async function PicklistPage({ params }: { params: Promise<{ event
   const canEdit = viewer.role === "global_scout" || viewer.role === "strategist" || viewer.role === "master" || viewerCanManage(viewer);
   const { data: event } = await supabase.from("events").select("id,name,event_key,is_manual").eq("event_key", eventKey).eq("organization_id", viewer.organizationId).maybeSingle();
   if (!event) notFound();
-  let oprs: Record<string, number> = {};
+  let oprs: Record<string, number> = {}; let eventRanks = new Map<number, number>();
   if (!event.is_manual && process.env.TBA_AUTH_KEY) try {
-    const response = await fetch(`https://www.thebluealliance.com/api/v3/event/${event.event_key}/oprs`, {
-      headers: { "X-TBA-Auth-Key": process.env.TBA_AUTH_KEY },
-      next: { revalidate: 60 },
-    });
-    if (response.ok) oprs = (await response.json())?.oprs ?? {};
+    const headers = { "X-TBA-Auth-Key": process.env.TBA_AUTH_KEY };
+    const [oprsResponse, rankingsResponse] = await Promise.all([
+      fetch(`https://www.thebluealliance.com/api/v3/event/${event.event_key}/oprs`, { headers, next: { revalidate: 20 } }),
+      fetch(`https://www.thebluealliance.com/api/v3/event/${event.event_key}/rankings`, { headers, next: { revalidate: 20 } }),
+    ]);
+    if (oprsResponse.ok) oprs = (await oprsResponse.json())?.oprs ?? {};
+    if (rankingsResponse.ok) for (const ranking of (await rankingsResponse.json())?.rankings ?? []) {
+      const teamNumber = Number(String(ranking.team_key ?? "").replace("frc", ""));
+      if (Number.isFinite(teamNumber) && typeof ranking.rank === "number") eventRanks.set(teamNumber, ranking.rank);
+    }
   } catch { /* Team number is a safe fallback while TBA is unavailable. */ }
-  const [{ data: categoryRows }, { data: eventTeamRows }, { data: rankingRows }, { data: changeRows }] = await Promise.all([
+  const [{ data: categoryRows }, { data: tagRows }, { data: eventTeamRows }, { data: rankingRows }, { data: changeRows }] = await Promise.all([
     (supabase as any).from("picklist_categories").select("id,name,color,sort_order").eq("organization_id", viewer.organizationId).order("sort_order").order("name"),
+    (supabase as any).from("picklist_tags").select("id,name,color,sort_order").eq("organization_id", viewer.organizationId).order("sort_order").order("name"),
     supabase.from("event_teams").select("team_id,teams(id,team_number,name)").eq("event_id", event.id),
-    (supabase as any).from("shared_picklist_rankings").select("id,team_id,category_id,rank,note,selected,created_by,updated_by,updated_at").eq("event_id", event.id),
+    (supabase as any).from("shared_picklist_rankings").select("id,team_id,category_id,rank,note,selected,tag_ids,created_by,updated_by,updated_at").eq("event_id", event.id),
     (supabase as any).from("picklist_change_log").select("id,team_id,action,before_state,after_state,created_at,teams(team_number,name),profiles!picklist_change_log_actor_user_id_fkey(display_name)").eq("event_id", event.id).order("created_at", { ascending: false }).limit(100),
   ]);
-  const teams = (eventTeamRows ?? []).map((row: any) => row.teams ? { ...row.teams, opr: Number(oprs[`frc${row.teams.team_number}`] ?? 0) } : null).filter(Boolean).sort((a: any, b: any) => b.opr - a.opr || a.team_number - b.team_number);
-  return <AppShell active="Picklist"><LiveRefresh tables={["picklist_categories"]}/><LiveRefresh tables={["shared_picklist_rankings", "picklist_change_log"]} eventId={event.id}/><PageHeader eyebrow={event.name} title="Picklist."/><PicklistBoard organizationId={viewer.organizationId} eventId={event.id} userId={viewer.userId} canEdit={canEdit} categories={categoryRows ?? []} teams={teams} rankings={rankingRows ?? []} changes={changeRows ?? []}/></AppShell>;
+  const teams = (eventTeamRows ?? []).map((row: any) => row.teams ? { ...row.teams, opr: Number(oprs[`frc${row.teams.team_number}`] ?? 0), eventRank: eventRanks.get(row.teams.team_number) ?? null } : null).filter(Boolean).sort((a: any, b: any) => b.opr - a.opr || a.team_number - b.team_number);
+  return <AppShell active="Picklist"><LiveRefresh tables={["picklist_categories", "picklist_tags"]}/><LiveRefresh tables={["shared_picklist_rankings", "picklist_change_log"]} eventId={event.id}/><PageHeader eyebrow={event.name} title="Picklist."/><PicklistBoard organizationId={viewer.organizationId} eventId={event.id} userId={viewer.userId} canEdit={canEdit} categories={categoryRows ?? []} tags={tagRows ?? []} teams={teams} rankings={rankingRows ?? []} changes={changeRows ?? []}/></AppShell>;
 }
