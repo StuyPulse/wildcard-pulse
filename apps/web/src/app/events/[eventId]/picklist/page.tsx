@@ -9,7 +9,7 @@ export default async function PicklistPage({ params }: { params: Promise<{ event
   const { eventId: eventKey } = await params;
   const [viewer, supabase] = await Promise.all([getViewerContext(), createClient()]);
   if (!viewer?.organizationId) redirect("/dashboard");
-  const canEdit = viewer.role === "strategist" || viewer.role === "master" || viewerCanManage(viewer);
+  const canEdit = viewer.role === "global_scout" || viewer.role === "strategist" || viewer.role === "master" || viewerCanManage(viewer);
   const { data: event } = await supabase.from("events").select("id,name,event_key,is_manual").eq("event_key", eventKey).eq("organization_id", viewer.organizationId).maybeSingle();
   if (!event) notFound();
   let oprs: Record<string, number> = {};

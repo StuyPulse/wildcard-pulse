@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 export type ViewerContext = {
   userId: string;
   organizationId: string | null;
-  role: "admin" | "scout" | "strategist" | "master" | "developer" | null;
+  role: "admin" | "scout" | "global_scout" | "strategist" | "master" | "developer" | null;
   activeEvent: { id: string; event_key: string; name: string; status: string } | null;
 };
 

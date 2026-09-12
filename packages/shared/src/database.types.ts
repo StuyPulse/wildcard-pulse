@@ -511,6 +511,7 @@ export type Database = {
         | "strategist"
         | "master"
         | "developer"
+        | "global_scout"
       submission_status: "draft" | "submitted" | "corrected" | "invalid"
     }
     CompositeTypes: {
@@ -656,6 +657,7 @@ export const Constants = {
         "strategist",
         "master",
         "developer",
+        "global_scout",
       ],
       submission_status: ["draft", "submitted", "corrected", "invalid"],
     },

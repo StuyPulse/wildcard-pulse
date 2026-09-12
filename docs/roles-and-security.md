@@ -6,6 +6,7 @@ The database is the authorization authority. `organization_members.role` is the 
 | --- | --- |
 | Admin / developer | Manage organization event setup, teams, matches, form versions, assignments, and corrections. |
 | Scout | Read only events in their assignments, submit only their own assigned data, and review only their own submissions. |
+| Global Scout | Read every event and assignment in the organization, scout any team, correct any scouting entry, and edit the shared picklist and its tiers. This role cannot manage users, events, assignments, or forms. |
 | Strategist | Read event data and submissions, but cannot mutate raw scout entries. |
 | Master | Reserved for the Phase 3 device relay workflow. |
 

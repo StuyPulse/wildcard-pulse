@@ -1,7 +1,7 @@
 import { z } from "zod";
 export type { Database } from "./database.types";
 
-export const organizationRoleSchema = z.enum(["admin", "scout", "strategist", "master", "developer"]);
+export const organizationRoleSchema = z.enum(["admin", "scout", "global_scout", "strategist", "master", "developer"]);
 export type OrganizationRole = z.infer<typeof organizationRoleSchema>;
 
 export const matchTypeSchema = z.enum(["qualification", "playoff", "practice"]);
