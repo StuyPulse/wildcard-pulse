@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Check, GripVertical, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, GripVertical, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useMemo, useState, type CSSProperties, type DragEvent, type FormEvent } from "react";
 import { LocalDateTime } from "@/components/local-date-time";
 import { createClient } from "@/lib/supabase/client";
@@ -19,15 +19,27 @@ export function PicklistBoard({ organizationId, eventId, userId, canEdit, catego
   const [newTierColor, setNewTierColor] = useState("#64748b");
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const [undoingChangeAt, setUndoingChangeAt] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"board" | "history">("board");
   const orderedCategories = useMemo(() => [...categories].sort((left, right) => left.sort_order - right.sort_order || left.name.localeCompare(right.name)), [categories]);
   const byTeam = useMemo(() => new Map(rankings.map((ranking) => [ranking.team_id, ranking])), [rankings]);
+  const changeGroups = useMemo(() => {
+    const groups = new Map<string, Change[]>();
+    for (const change of changes) groups.set(change.created_at, [...(groups.get(change.created_at) ?? []), change]);
+    return groups;
+  }, [changes]);
+  const latestChangeIds = useMemo(() => {
+    const latest = new Set<string>(); const seenTeams = new Set<string>();
+    for (const change of changes) if (!seenTeams.has(change.team_id)) { latest.add(change.id); seenTeams.add(change.team_id); }
+    return latest;
+  }, [changes]);
   const fallbackTier = orderedCategories[0]?.id ?? null;
   const teamsInTier = (categoryId: string) => teams.filter((team) => (byTeam.get(team.id)?.category_id ?? fallbackTier) === categoryId).sort((left, right) => (byTeam.get(left.id)?.rank ?? Number.MAX_SAFE_INTEGER) - (byTeam.get(right.id)?.rank ?? Number.MAX_SAFE_INTEGER) || (right.opr ?? 0) - (left.opr ?? 0) || left.team_number - right.team_number);
 
   const rankingPayload = (team: Team, changes: Partial<Pick<Ranking, "rank" | "category_id" | "note" | "selected">>) => {
     const current = byTeam.get(team.id);
-    return { organization_id: organizationId, event_id: eventId, team_id: team.id, created_by: current?.created_by ?? userId, updated_by: userId, rank: changes.rank ?? current?.rank ?? teams.findIndex((item) => item.id === team.id) + 1, category_id: changes.category_id ?? current?.category_id ?? fallbackTier, note: changes.note ?? current?.note ?? "", selected: changes.selected ?? current?.selected ?? false };
+    const hasChange = (field: keyof Pick<Ranking, "rank" | "category_id" | "note" | "selected">) => Object.prototype.hasOwnProperty.call(changes, field);
+    return { organization_id: organizationId, event_id: eventId, team_id: team.id, created_by: current?.created_by ?? userId, updated_by: userId, rank: hasChange("rank") ? changes.rank : current?.rank ?? teams.findIndex((item) => item.id === team.id) + 1, category_id: hasChange("category_id") ? changes.category_id : current?.category_id ?? fallbackTier, note: hasChange("note") ? changes.note : current?.note ?? "", selected: hasChange("selected") ? changes.selected : current?.selected ?? false };
   };
 
   async function persistTeams(next: { team: Team; changes: Partial<Pick<Ranking, "rank" | "category_id" | "note" | "selected">> }[], successMessage: string) {
@@ -97,6 +109,20 @@ export function PicklistBoard({ organizationId, eventId, userId, canEdit, catego
   const finishDrag = () => { setDraggingId(null); setDropTargetId(null); };
   const dropOn = (event: DragEvent<HTMLElement>, categoryId: string, beforeTeamId?: string) => { event.preventDefault(); event.stopPropagation(); const teamId = event.dataTransfer.getData("text/plain") || draggingId; if (teamId) void moveToTier(teamId, categoryId, beforeTeamId); finishDrag(); };
 
+  async function undoChanges(group: Change[]) {
+    if (!canEdit || !group.length) return;
+    const restores = group.flatMap((change) => {
+      const team = teams.find((item) => item.id === change.team_id);
+      const before = restoreRankingState(change.before_state);
+      return team && before ? [{ team, changes: before }] : [];
+    });
+    if (restores.length !== group.length) { setNotice("That history entry cannot be undone safely."); return; }
+    const changeAt = group[0].created_at;
+    setUndoingChangeAt(changeAt);
+    await persistTeams(restores, restores.length === 1 ? `Restored Team ${restores[0].team.team_number}.` : `Restored ${restores.length} team changes.`);
+    setUndoingChangeAt(null);
+  }
+
   return <>
     <section className="card picklist-workspace">
       <div className="picklist-workspace-head">
@@ -139,7 +165,12 @@ export function PicklistBoard({ organizationId, eventId, userId, canEdit, catego
       })}
     </section> : <section className="card section picklist-history" role="tabpanel">
       <div className="card-head"><h2>History</h2><span className="muted">{changes.length} recent changes</span></div>
-      <div className="picklist-activity">{changes.length ? changes.map((change) => <ChangeRow key={change.id} change={change} categories={orderedCategories}/>) : <p className="muted">No shared edits have been recorded yet.</p>}</div>
+      <div className="picklist-activity">{changes.length ? changes.map((change) => {
+        const group = changeGroups.get(change.created_at) ?? [change];
+        const isGroupLead = group[0]?.id === change.id;
+        const canUndo = canEdit && isGroupLead && group.every((item) => item.action === "updated" && restoreRankingState(item.before_state) && latestChangeIds.has(item.id));
+        return <ChangeRow key={change.id} change={change} categories={orderedCategories} canUndo={canUndo} undoing={undoingChangeAt === change.created_at} onUndo={() => void undoChanges(group)}/>;
+      }) : <p className="muted">No shared edits have been recorded yet.</p>}</div>
     </section>}
     {notice && <p className="trend" aria-live="polite">{notice}</p>}
   </>;
@@ -163,9 +194,19 @@ function TierTeamRow({ team, ranking, categories, tierIndex, tierSize, canEdit, 
   </article>;
 }
 
-function ChangeRow({ change, categories }: { change: Change; categories: Category[] }) {
+function restoreRankingState(state: Change["before_state"]): Partial<Pick<Ranking, "rank" | "category_id" | "note" | "selected">> | null {
+  if (!state) return null;
+  const restored: Partial<Pick<Ranking, "rank" | "category_id" | "note" | "selected">> = {};
+  if (typeof state.rank === "number") restored.rank = state.rank;
+  if (typeof state.category_id === "string" || state.category_id === null) restored.category_id = state.category_id;
+  if (typeof state.note === "string") restored.note = state.note;
+  if (typeof state.selected === "boolean") restored.selected = state.selected;
+  return Object.keys(restored).length ? restored : null;
+}
+
+function ChangeRow({ change, categories, canUndo, undoing, onUndo }: { change: Change; categories: Category[]; canUndo: boolean; undoing: boolean; onUndo: () => void }) {
   const before = change.before_state ?? {}; const after = change.after_state ?? {};
   const category = (id: unknown) => typeof id === "string" ? categories.find((item) => item.id === id)?.name ?? "Unassigned" : "Unassigned";
   const details = change.action === "baseline" ? "Adopted as the initial shared ranking" : change.action === "created" ? `Added to ${category(after.category_id)}` : [before.rank !== after.rank && "Changed tier order", before.category_id !== after.category_id && `Tier ${category(before.category_id)} → ${category(after.category_id)}`, before.note !== after.note && "Updated note", before.selected !== after.selected && (after.selected ? "Selected" : "Unselected")].filter(Boolean).join(" · ") || "Updated shared ranking";
-  return <div className="picklist-activity-row"><div><strong>{change.teams ? `${change.teams.team_number} · ${change.teams.name}` : "Team"}</strong><span>{details}</span></div><small>{change.profiles?.display_name ?? "Unknown member"} · <LocalDateTime value={change.created_at}/></small></div>;
+  return <div className="picklist-activity-row"><div><strong>{change.teams ? `${change.teams.team_number} · ${change.teams.name}` : "Team"}</strong><span>{details}</span></div><div className="picklist-activity-actions"><small>{change.profiles?.display_name ?? "Unknown member"} · <LocalDateTime value={change.created_at}/></small>{canUndo && <button type="button" className="picklist-undo-button" disabled={undoing} onClick={onUndo}><RotateCcw size={13} aria-hidden="true"/>{undoing ? "Undoing…" : "Undo"}</button>}</div></div>;
 }
