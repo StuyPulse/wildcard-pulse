@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BarChart3, CalendarDays, ChevronLeft, ChevronRight, ClipboardList, LayoutDashboard, ListOrdered, MoreHorizontal, Radio, Settings, ShieldCheck, Users, X, type LucideIcon } from "lucide-react";
+import { BarChart3, CalendarDays, ChevronLeft, ChevronRight, ClipboardList, LayoutDashboard, ListOrdered, Map, MoreHorizontal, Radio, Settings, ShieldCheck, Users, X, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { BrandLogo } from "./brand-logo";
 import { SignOutButton } from "./sign-out-button";
@@ -20,7 +20,7 @@ export function Sidebar({ active, canManage, eventHref }: Props) {
   const [moreOpen, setMoreOpen] = useState(false);
   const workspace: NavItem[] = [["Dashboard", "/dashboard", LayoutDashboard], ["Teams", `${eventHref}/teams`, Users], ["Summary", `${eventHref}/summary`, BarChart3], ["Matches", `${eventHref}/matches`, ClipboardList]];
   const scout: NavItem[] = [["Scouting forms", "/scout/manual", ClipboardList], ["Submissions", "/submissions", BarChart3]];
-  const strategy: NavItem[] = [["Picklist", `${eventHref}/picklist`, ListOrdered]];
+  const strategy: NavItem[] = [["Match strategy", `${eventHref}/strategy`, Map], ["Picklist", `${eventHref}/picklist`, ListOrdered]];
   const admin: NavItem[] = [["Events", "/events", CalendarDays], ["Assignments", "/admin/assignments", Radio], ["Users & roles", "/admin/users", ShieldCheck], ["Form builder", "/admin/forms", Settings]];
   const navigation: NavSection[] = [["Workspace", workspace], ["Scout", scout], ["Strategy", strategy]];
   if (canManage) navigation.push(["Admin", admin]);

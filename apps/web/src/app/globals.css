@@ -410,6 +410,31 @@
   .summary-table .summary-rank-cell { font-family:'DM Mono',monospace; }
   .summary-mobile-list { display: none; }
   .summary-mobile-view-toggle, .summary-table-scroll-help { display: none; }
+  .strategy-card { @apply max-w-[1320px]; }
+  .strategy-controls { @apply mb-4 flex items-end justify-between gap-4 rounded-lg border border-stuypulse-border bg-stuypulse-bg/50 p-3; }
+  .strategy-controls label { @apply grid min-w-[260px] gap-1 text-[10px] font-bold uppercase tracking-[0.08em] text-stuypulse-textMuted; font-family:'DM Mono',monospace; }
+  .strategy-controls select, .strategy-slot select { @apply min-h-10 w-full rounded-md border border-stuypulse-border bg-stuypulse-surface px-2 text-sm font-semibold normal-case tracking-normal text-stuypulse-text outline-none focus:border-stuypulse-redHover focus:ring-1 focus:ring-stuypulse-redHover; font-family:Manrope,sans-serif; }
+  .strategy-controls p { @apply mb-0 max-w-sm text-right leading-relaxed; }
+  .strategy-field { @apply relative isolate min-h-[620px] overflow-hidden rounded-panel border border-stuypulse-border bg-white; aspect-ratio:2.04 / 1; }
+  .strategy-field-art { @apply absolute inset-0 bg-cover bg-center; background-image:url('/2026-field-map.png'); }
+  .strategy-slot { @apply absolute z-10 w-[178px] rounded-lg border-2 bg-stuypulse-surface/95 p-2.5 text-stuypulse-text shadow-elevated; backdrop-filter:blur(8px); }
+  .strategy-slot.red { @apply border-stuypulse-red; }
+  .strategy-slot.blue { @apply border-sky-500; }
+  .strategy-slot.red.strategy-slot-1, .strategy-slot.red.strategy-slot-2, .strategy-slot.red.strategy-slot-3 { left:8%; }
+  .strategy-slot.blue.strategy-slot-1, .strategy-slot.blue.strategy-slot-2, .strategy-slot.blue.strategy-slot-3 { right:8%; }
+  .strategy-slot-1 { top:10%; }
+  .strategy-slot-2 { top:36%; }
+  .strategy-slot-3 { top:62%; }
+  .strategy-slot-head { @apply mb-2 flex items-center justify-between gap-2; }
+  .strategy-slot-head span { @apply text-[9px] font-bold uppercase tracking-[0.1em] text-stuypulse-textMuted; font-family:'DM Mono',monospace; }
+  .strategy-slot.red .strategy-slot-head strong { @apply text-stuypulse-redHover; }
+  .strategy-slot.blue .strategy-slot-head strong { @apply text-sky-400; }
+  .strategy-team-name { @apply mt-2 truncate text-xs font-bold; }
+  .strategy-metrics { @apply mt-2 grid grid-cols-2 gap-x-2 gap-y-1.5 border-y border-stuypulse-border py-2; }
+  .strategy-metrics div { @apply min-w-0; }
+  .strategy-metrics span { @apply block truncate text-[8px] font-medium uppercase tracking-[0.08em] text-stuypulse-textMuted; font-family:'DM Mono',monospace; }
+  .strategy-metrics strong { @apply block text-xs font-extrabold; font-family:'DM Mono',monospace; }
+  .strategy-tendencies { @apply mt-2 flex flex-wrap gap-x-2 gap-y-1 text-[9px] font-medium text-stuypulse-textMuted; font-family:'DM Mono',monospace; }
   .compare-picker { @apply grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-4; }
   .compare-card { @apply max-w-5xl; }
   .compare-team-heading { @apply mb-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4; }
@@ -534,6 +559,22 @@
   .comparison-metric strong { @apply flex items-center justify-between rounded-md bg-stuypulse-bg px-2.5 py-2 text-sm; }
   .comparison-metric strong::before { @apply text-[10px] font-medium text-stuypulse-textMuted; font-family:'DM Mono',monospace; content: attr(data-team); }
   .summary-card { @apply p-4; }
+  .strategy-controls { @apply items-stretch; }
+  .strategy-controls label { @apply min-w-0; }
+  .strategy-controls p { @apply max-w-none text-left; }
+  .strategy-field { @apply min-h-[700px] aspect-auto; }
+  .strategy-slot { @apply w-[136px] p-2; }
+  .strategy-slot.red.strategy-slot-1, .strategy-slot.red.strategy-slot-2, .strategy-slot.red.strategy-slot-3 { left:3%; }
+  .strategy-slot.blue.strategy-slot-1, .strategy-slot.blue.strategy-slot-2, .strategy-slot.blue.strategy-slot-3 { right:3%; }
+  .strategy-slot-1 { top:6%; }
+  .strategy-slot-2 { top:37%; }
+  .strategy-slot-3 { top:68%; }
+  .strategy-slot select { @apply min-h-9 text-[11px]; }
+  .strategy-team-name { @apply text-[10px]; }
+  .strategy-metrics { @apply gap-x-1.5 gap-y-1 py-1.5; }
+  .strategy-metrics span { @apply text-[7px]; }
+  .strategy-metrics strong { @apply text-[10px]; }
+  .strategy-tendencies { @apply text-[7px]; }
   .summary-table { @apply hidden; }
   .summary-table.summary-mobile-table-visible { @apply block; }
   .summary-mobile-list { @apply grid gap-3; display: grid; }
